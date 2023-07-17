@@ -9,6 +9,9 @@ urlpatterns = [
     path('add-member', AddandDeleteFamilyMembersAPI.as_view(), name="AddandDeleteFamilyMembersAPI"),
     path('delete-member', AddandDeleteFamilyMembersAPI.as_view(), name="AddandDeleteFamilyMembersAPI"),
 
+    #------------------ List Family Members -----------------#
+    path('family-members', ListFamilyMembersAPI.as_view(), name="ListFamilyMembersAPI"),
+
     #------------------- Login User ------------------------#
     path('user-login', UserLoginAPI.as_view(), name="UserLoginAPI"),
 

@@ -24,6 +24,9 @@ def valueEntity(item) -> dict:
         return item
     return None
 
+def valuesEntity(entity) -> list:
+    return [valueEntity(item) for item in entity]
+
 # # Creating Collections (Tables)
 # community_members = db.community_members
 # accounts = db.account
@@ -165,10 +168,31 @@ class AddandDeleteFamilyMembersAPI(APIView):
             return unauthorisedRequest()
 
 
+#----------------------- List of Family Members ----------------------# (PARENT USER)
+
+class ListFamilyMembersAPI(APIView):
+
+    def get(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fee": True, "role": "parent_user"})
+            if parent_user:
+                filter = {"createdBy": ObjectId(parent_user["_id"])}
+                family_members = valuesEntity(db.community_members.find(filter, {"_id": 0, "password": 0, "createdBy": 0, "updatedBy": 0, "is_approved": 0, "createdAt": 0,"updatedAt": 0, "is_active": 0, "role":0}))
+                if family_members:
+                    return onSuccess("Family Members List.", family_members)
+                else:
+                    return badRequest("No Family Members found.")
+            else:
+                return badRequest("Root user not found.")
+        else:
+            return unauthorisedRequest()
+
+
 #----------------------- User Profile View, Update and Delete -------------------------# (USER)
 
 class UserProfileAPI(APIView):
-    
+
     def get(self, request):
         token = authenticate(request)
         if token and ObjectId().is_valid(token["_id"]):
