@@ -28,7 +28,7 @@ def valueEntity(item) -> dict:
 # community_members = db.community_members
 # accounts = db.account
 
-#----------------- Sign-Up User API ------------------#
+#----------------- Sign-Up User API ------------------# (USER)
 
 class RegisterUserAPI(APIView):
     def post(self, request):
@@ -72,7 +72,7 @@ class RegisterUserAPI(APIView):
             return badRequest("Invalid first name, Please try again.")
 
 
-#-------------------------- Login User ----------------------------#
+#-------------------------- Login User ----------------------------# (USER)
 
 class UserLoginAPI(APIView):
     def post(self, request):
@@ -96,9 +96,9 @@ class UserLoginAPI(APIView):
             return badRequest("Invalid mobile number or email.")
 
 
-#--------------------------- Add Family Members -------------------------#
+#--------------------------- Add/Delete Family Members -------------------------# (PARENT USER)
 
-class AddFamilyMembersAPI(APIView):
+class AddandDeleteFamilyMembersAPI(APIView):
     def post(self, request):
         token = authenticate(request)
         if token and ObjectId().is_valid(token["_id"]):
@@ -146,11 +146,29 @@ class AddFamilyMembersAPI(APIView):
                 return badRequest("Root User not found.")
         else:
             return unauthorisedRequest()
+        
+    def delete(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            data = request.data
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "role": "parent_user"})
+            if parent_user:
+                get_member = db.community_members.find_one({"_id": ObjectId(data["_id"]), "role": "child_user"})
+                if get_member:
+                    db.community_members.delete_one(get_member)
+                    return onSuccess("Member deleted successfully.", 1)
+                else:
+                    return badRequest("Member not found.")
+            else:
+                return badRequest("Root user not found.")
+        else:
+            return unauthorisedRequest()
 
 
-#----------------------- View Profile -------------------------#
+#----------------------- User Profile View, Update and Delete -------------------------# (USER)
 
-class ViewProfileAPI(APIView):
+class UserProfileAPI(APIView):
+    
     def get(self, request):
         token = authenticate(request)
         if token and ObjectId().is_valid(token["_id"]):
@@ -162,9 +180,6 @@ class ViewProfileAPI(APIView):
         else:
             return unauthorisedRequest()
 
-#------------------------- Edit Profile ------------------------#
-
-class EditProfileAPI(APIView):
     def post(self, request):
         token = authenticate(request)
         if token and ObjectId().is_valid(token["_id"]):
@@ -187,5 +202,17 @@ class EditProfileAPI(APIView):
                     return badRequest("Invalid data to update profile, Please try again.")
             else:
                 return badRequest("User not found")
+        else:
+            return unauthorisedRequest()
+
+    def delete(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fee": True})
+            if get_user:
+                db.community_members.delete_one(get_user)
+                return onSuccess("Profile deleted successfully.", 1)
+            else:
+                return badRequest("User not found.")
         else:
             return unauthorisedRequest()
