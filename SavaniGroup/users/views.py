@@ -225,7 +225,7 @@ class UserProfileAPI(APIView):
                 else:
                     return badRequest("Invalid data to update profile, Please try again.")
             else:
-                return badRequest("User not found")
+                return badRequest("User not found.")
         else:
             return unauthorisedRequest()
 

@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from bson.objectid import ObjectId
 from core.response import *
 from core.authentication import *
-from django.core import serializers
+from .utils import *
 
 # Mongo client for making connection with database 
 client = MongoClient(config('MONGO_CONNECTION_STRING'))
@@ -94,45 +94,102 @@ class LoginAdminAPI(APIView):
             return badRequest("Invalid mobile number or email.")
         
 
-# #-------------------------- View/Update Admin Profile -------------------#
+#-------------------------- View/Update Admin Profile -------------------#
 
-# class AdminProfileAPI(APIView):
+class AdminProfileAPI(APIView):
 
-#     def get(self, request):
-#         token = authenticate(request)
-#         if token and ObjectId().is_valid(token["_id"]):
-#             get_admin = valueEntity(db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}, {"_id": 0,"password": 0,  "is_admin" : 0, "createdAt": 0,"updatedAt": 0}))
-#             if get_admin is not None:
-#                 return onSuccess("Admin profile!", get_admin)
-#             else:
-#                 return badRequest("Admin not found")
-#         else:
-#             return unauthorisedRequest()
+    def get(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = valueEntity(db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}, {"_id": 0,"password": 0,  "is_admin" : 0, "createdAt": 0,"updatedAt": 0}))
+            if get_admin is not None:
+                return onSuccess("Admin profile!", get_admin)
+            else:
+                return badRequest("Admin not found")
+        else:
+            return unauthorisedRequest()
 
-    # def post(self, request):
-    #     token = authenticate(request)
-    #     if token and ObjectId().is_valid(token["_id"]):
-    #         data = request.data
-    #         userData = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fee": True})
-    #         if userData is not None:
-    #             new_obj = {"$set": {
-    #                 "firstname": data["firstname"],
-    #                 "lastname": data["lastname"],
-    #                 "profile_pic": "",
-    #                 "updatedAt": datetime.datetime.now(),
-    #                 "updatedBy": ObjectId(token["_id"]),
-    #             }
-    #             }
-    #             updateUser = db.community_members.find_one_and_update({"_id": ObjectId(token["_id"])}, new_obj)
-    #             if updateUser:
-    #                 updatedUser = valueEntity(db.community_members.find_one({"_id": ObjectId(token["_id"])}, {"password": 0, "createdBy": 0, "updatedBy": 0, "is_approved": 0, "createdAt": 0,"updatedAt": 0}))
-    #                 return onSuccess("Profile updated successfully!", updatedUser)
-    #             else:
-    #                 return badRequest("Invalid data to update profile, Please try again.")
-    #         else:
-    #             return badRequest("User not found")
-    #     else:
-    #         return unauthorisedRequest()
+    def post(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            data = request.data
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                new_obj = {"$set": {
+                    "firstname": data["firstname"],
+                    "lastname": data["lastname"],
+                    "profile_pic": "",
+                    "updatedAt": datetime.datetime.now(),
+                    "updatedBy": ObjectId(token["_id"]),
+                }
+                }
+                updateUser = db.admin.find_one_and_update({"_id": ObjectId(get_admin["_id"])}, new_obj)
+                if updateUser:
+                    updatedUser = valueEntity(db.admin.find_one({"_id": ObjectId(get_admin["_id"])}, {"_id": 0,"password": 0,  "is_admin" : 0, "createdAt": 0, "updatedBy":0}))
+                    return onSuccess("Profile updated successfully!", updatedUser)
+                else:
+                    return badRequest("Invalid data to update profile, Please try again.")
+            else:
+                return badRequest("Admin not found")
+        else:
+            return unauthorisedRequest()
 
+
+#----------------------- Get All Community Members ---------------------#
+
+class GetAllCommunityMembersAPI(APIView):
+
+    def get(self, request):
+        token =  authenticate(request)
+        if token:
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+            role = request.GET.get("role")
+            if role != None or 0:
+                get_all_members = valuesEntity(db.community_members.find({"role": role}, {"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                if get_all_members:
+                    return onSuccess("All users based on filter.", get_all_members)
+                else:
+                    return badRequest("No Users Found based on filter.")
+            elif get_admin is not None:
+                get_all_members = valuesEntity(db.community_members.find({},{"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                if get_all_members:
+                    return onSuccess("Record List", get_all_members)
+                else:
+                    return badRequest("No Records found.")
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
+
+
+#--------------------- Add Community Services --------------------#
+
+
+class AddCommunitySerivicesAPI(APIView):
+
+    def post(self, request):
+        token = authenticate(request)
+        if token:
+            data = request.data
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                pdf = request.FILES["pdf_form"]
+                print("type of pdf", type(pdf))
+                 # Convert the InMemoryUploadedFile to bytes
+                pdf_bytes = convert_inmemory_file_to_bytes(pdf)
+                # binary_pdf = Binary(pdf_bytes)
+                obj = {
+                    "scheme_name": data["scheme_name"],
+                    "pdf_form": pdf_bytes,
+                    "createdBy": ObjectId(token["_id"]),
+                    "createdAt": datetime.datetime.now(),
+                    "updatedAt": "",
+                }
+                db.community_services.insert_one(obj)
+                return onSuccess("Scheme added successfully.", 1)
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
 
 
