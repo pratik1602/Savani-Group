@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'admin_panel',
-    'users'
+    'users',
+    'cloudinary_storage',
+    # 'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -127,3 +129,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CSRF_TRUSTED_ORIGINS=['http://127.0.0.1:8000/']
+
+
+# CLOUDINARY_STORAGE = {
+#     'CLOUD_NAME': config('CLOUD_NAME'),
+#     'API_KEY': config('API_KEY'),
+#     'API_SECRET': config('API_SECRET')
+# }
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

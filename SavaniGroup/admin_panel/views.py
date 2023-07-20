@@ -163,9 +163,10 @@ class GetAllCommunityMembersAPI(APIView):
 
 
 #--------------------- Add Community Services --------------------#
+# from io import BytesIO
 
 
-class AddCommunitySerivicesAPI(APIView):
+class AddandGetCommunitySerivicesAPI(APIView):
 
     def post(self, request):
         token = authenticate(request)
@@ -174,13 +175,10 @@ class AddCommunitySerivicesAPI(APIView):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
             if get_admin is not None:
                 pdf = request.FILES["pdf_form"]
-                print("type of pdf", type(pdf))
-                 # Convert the InMemoryUploadedFile to bytes
-                pdf_bytes = convert_inmemory_file_to_bytes(pdf)
-                # binary_pdf = Binary(pdf_bytes)
+                pdf_url = upload_pdf_to_cloudinary(pdf)
                 obj = {
                     "scheme_name": data["scheme_name"],
-                    "pdf_form": pdf_bytes,
+                    "pdf_form": pdf_url,
                     "createdBy": ObjectId(token["_id"]),
                     "createdAt": datetime.datetime.now(),
                     "updatedAt": "",
@@ -191,5 +189,21 @@ class AddCommunitySerivicesAPI(APIView):
                 return badRequest("Admin not found.")
         else:
             return unauthorisedRequest()
+
+    def get(self, request):
+        token = authenticate(request)
+        if token:
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                get_Community_services = valuesEntity(db.community_services.find())
+                if get_Community_services:
+                    return onSuccess("Community services.", get_Community_services)
+                else:
+                    return badRequest("No Community services found.")
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
+
 
 

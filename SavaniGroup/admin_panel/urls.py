@@ -17,7 +17,8 @@ urlpatterns = [
     path('list-community-members', GetAllCommunityMembersAPI.as_view(), name="GetAllCommunityMembersAPI"),
 
     #------------------ Add Community Services ----------------#
-    path('add-community-service', AddCommunitySerivicesAPI.as_view(), name="AddCommunitySerivicesAPI"),
+    path('add-community-service', AddandGetCommunitySerivicesAPI.as_view(), name="AddandGetCommunitySerivicesAPI"),
+    path('get-community-service', AddandGetCommunitySerivicesAPI.as_view(), name="AddandGetCommunitySerivicesAPI"),
 
 
 
