@@ -39,7 +39,7 @@ class RegisterUserAPI(APIView):
         if data['firstname'] != '' and len(data['firstname']) >= 3:
             if data['lastname'] != '' and len(data['lastname']) >= 3:
                 if len(data['mobile_no']) == 10 and re.match("[6-9][0-9]{9}", data['mobile_no']):
-                    if data['email'] != '' and re.match("^[a-zA-Z0-9-_]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+                    if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
                         if data["password"] == data["confirm_password"]:
                             existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
                             if not existingUser:
@@ -80,7 +80,7 @@ class RegisterUserAPI(APIView):
 class UserLoginAPI(APIView):
     def post(self, request):
         data = request.data
-        if (data['username'] != '' and len(data['username']) == 10 and re.match("[6-9][0-9]{9}", data['username'])) or (data['username'] != '' and re.match("^[a-zA-Z0-9-_]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["username"])):
+        if (data['username'] != '' and len(data['username']) == 10 and re.match("[6-9][0-9]{9}", data['username'])) or (data['username'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["username"])):
             if data['password'] != '' and len(data['password']) >= 8:
                 get_user = db.community_members.find_one({"$or": [{"mobile_no": data["username"]}, {"email": data["username"]}], "is_approved": True})
                 if get_user is not None:
@@ -111,7 +111,7 @@ class AddandDeleteFamilyMembersAPI(APIView):
                 if data['firstname'] != '' and len(data['firstname']) >= 3:
                     if data['lastname'] != '' and len(data['lastname']) >= 3:
                         if len(data['mobile_no']) == 10 and re.match("[6-9][0-9]{9}", data['mobile_no']):
-                            if data['email'] != '' and re.match("^[a-zA-Z0-9-_]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+                            if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
                                 if data["password"] == data["confirm_password"]:
                                     existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
                                     if not existingUser:
