@@ -3,12 +3,13 @@ from pymongo import MongoClient
 from decouple import config
 from rest_framework.views import APIView
 from datetime import datetime
-import re
+import re , math , random
 from django.contrib.auth.hashers import make_password, check_password
 from bson.objectid import ObjectId
 from core.response import *
 from core.authentication import *
 from django.core import serializers
+from .utils import send_verification_mail
 
 # Mongo client for making connection with database 
 client = MongoClient(config('MONGO_CONNECTION_STRING'))
@@ -30,6 +31,15 @@ def valuesEntity(entity) -> list:
 # # Creating Collections (Tables)
 # community_members = db.community_members
 # accounts = db.account
+
+#generate otp
+def generateOTP() :
+    digits = "0123456789"
+    OTP = ""
+    for i in range(6) :
+        OTP += digits[math.floor(random.random() * 10)]
+ 
+    return OTP
 
 #----------------- Sign-Up User API ------------------# (USER)
 
@@ -73,6 +83,9 @@ class RegisterUserAPI(APIView):
                                     "updatedBy": "",
                                 }
                                 db.community_members.insert_one(obj)
+                                subject = 'verify your email'
+                                message = 'OTP :' + obj["otp"]
+                                send_verification_mail(obj['email'] , subject , message)
                                 return onSuccess("Regitration Successful...", 1)
                             else:
                                 return badRequest("User already exist with same mobile or email, Please try again.")
@@ -145,6 +158,9 @@ class AddandDeleteFamilyMembersAPI(APIView):
                                             "updatedBy": "",
                                         }
                                         db.community_members.insert_one(obj)
+                                        email = obj['email']
+                                        subject = "verify email"
+                                        message = "OTP :" + str(otp)
                                         return onSuccess("Family Member Added Successfully...", 1)
                                     else:
                                         return badRequest("User already exist with same mobile or email, Please try again.")
