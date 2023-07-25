@@ -18,11 +18,12 @@ urlpatterns = [
 
     #------------------ Add Community Services ----------------#
     path('add-community-service', AddandGetCommunitySerivicesAPI.as_view(), name="AddandGetCommunitySerivicesAPI"),
-    path('get-community-service', AddandGetCommunitySerivicesAPI.as_view(), name="AddandGetCommunitySerivicesAPI"),
 
+    #------------------ Get Community Servives ----------------# (ADMIN, USER)
+    path('get-community-service', GetCommunityServicesAPI.as_view(), name="GetCommunityServicesAPI"),
 
-
-
+    #------------------- Approve Community Members ------------#
+    path('approve-member', ApproveCommunityMembersAPI.as_view(), name="ApproveCommunityMembersAPI"),
 
 
 ]

@@ -141,21 +141,22 @@ class GetAllCommunityMembersAPI(APIView):
 
     def get(self, request):
         token =  authenticate(request)
-        if token:
+        if token and ObjectId().is_valid(token["_id"]):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
-            role = request.GET.get("role")
-            if role != None or 0:
-                get_all_members = valuesEntity(db.community_members.find({"role": role}, {"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
-                if get_all_members:
-                    return onSuccess("All users based on filter.", get_all_members)
+            if get_admin is not None:
+                role = request.GET.get("role")
+                if role != None or 0:
+                    get_all_members = valuesEntity(db.community_members.find({"role": role}, {"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                    if get_all_members:
+                        return onSuccess("All users based on filter.", get_all_members)
+                    else:
+                        return badRequest("No Users Found based on filter.")
                 else:
-                    return badRequest("No Users Found based on filter.")
-            elif get_admin is not None:
-                get_all_members = valuesEntity(db.community_members.find({},{"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
-                if get_all_members:
-                    return onSuccess("Record List", get_all_members)
-                else:
-                    return badRequest("No Records found.")
+                    get_all_members = valuesEntity(db.community_members.find({},{"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                    if get_all_members:
+                        return onSuccess("Community Members List", get_all_members)
+                    else:
+                        return badRequest("No Members found.")
             else:
                 return badRequest("Admin not found.")
         else:
@@ -170,7 +171,7 @@ class AddandGetCommunitySerivicesAPI(APIView):
 
     def post(self, request):
         token = authenticate(request)
-        if token:
+        if token and ObjectId().is_valid(token["_id"]):
             data = request.data
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
             if get_admin is not None:
@@ -190,11 +191,16 @@ class AddandGetCommunitySerivicesAPI(APIView):
         else:
             return unauthorisedRequest()
 
+
+#--------------------------- Get Community Servives --------------------# (ADMIN, USER)
+
+class GetCommunityServicesAPI(APIView):
+
     def get(self, request):
         token = authenticate(request)
-        if token:
-            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
-            if get_admin is not None:
+        if token and ObjectId().is_valid(token["_id"]):
+            get_user = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}) or db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_active":True}) 
+            if get_user is not None:
                 get_Community_services = valuesEntity(db.community_services.find())
                 if get_Community_services:
                     return onSuccess("Community services.", get_Community_services)
@@ -206,4 +212,31 @@ class AddandGetCommunitySerivicesAPI(APIView):
             return unauthorisedRequest()
 
 
+#------------------------------ Approve Community Members -----------------------#
+
+class ApproveCommunityMembersAPI(APIView):
+
+    def post(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                if ObjectId().is_valid(data["_id"]):
+                    get_community_member = db.community_members.find_one({"_id": ObjectId(data["_id"]), "is_active": True, "registration_fee": True})
+                    if get_community_member:
+                        obj = {"$set": {
+                            "is_approved": data["is_approved"]
+                        }   
+                        }
+                        db.community_members.find_one_and_update({"_id": ObjectId(get_community_member["_id"])}, obj)
+                        return onSuccess("Communiy member approved successfully.", 1)
+                    else:
+                        return badRequest("Community member not found or not active or not paid registration fees.")
+                else:
+                    return badRequest("user id is invalid.")
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
 
