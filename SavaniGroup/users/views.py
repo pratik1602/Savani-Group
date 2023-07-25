@@ -254,9 +254,3 @@ class UserProfileAPI(APIView):
         else:
             return unauthorisedRequest()
         
-
-#--------------------------- Apply for Community Services -----------------------#
-
-# class ApplyForCommunityServicesAPI(APIView):
-
-#     def 
