@@ -5,6 +5,12 @@ urlpatterns = [
     #------------------- Register User --------------------#
     path('register-user', RegisterUserAPI.as_view(), name="RegisterUserAPI"),
 
+    #------------------- Verify email --------------------#
+    path('verify-email' , VerifyOtp.as_view() , name='VerifyOtp'),
+
+    #------------------- Resend otp --------------------#
+    path('resend-otp' , ResendOtp.as_view() , name='ResendOtp'),
+
     #------------------- Add / Delete Family Members -------------#
     path('add-member', AddandDeleteFamilyMembersAPI.as_view(), name="AddandDeleteFamilyMembersAPI"),
     path('delete-member', AddandDeleteFamilyMembersAPI.as_view(), name="AddandDeleteFamilyMembersAPI"),

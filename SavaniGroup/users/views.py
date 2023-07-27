@@ -1,14 +1,15 @@
 from django.shortcuts import render
-from pymongo import MongoClient
+from pymongo import MongoClient , ReturnDocument
 from decouple import config
 from rest_framework.views import APIView
 from datetime import datetime
-import re
+import re , math , random
 from django.contrib.auth.hashers import make_password, check_password
 from bson.objectid import ObjectId
 from core.response import *
 from core.authentication import *
 from django.core import serializers
+from .utils import send_verification_mail
 
 # Mongo client for making connection with database 
 client = MongoClient(config('MONGO_CONNECTION_STRING'))
@@ -31,6 +32,15 @@ def valuesEntity(entity) -> list:
 # community_members = db.community_members
 # accounts = db.account
 
+#generate otp
+def generateOTP() :
+    digits = "0123456789"
+    OTP = ""
+    for i in range(6) :
+        OTP += digits[math.floor(random.random() * 10)]
+ 
+    return OTP
+
 #----------------- Sign-Up User API ------------------# (USER)
 
 class RegisterUserAPI(APIView):
@@ -44,13 +54,9 @@ class RegisterUserAPI(APIView):
                             existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
                             if not existingUser:
                                 obj = {
-                                    "profile_pic": "",
                                     "firstname": data['firstname'],
-                                    "middlename": data["middlename"],
-                                    "lastname": "Savani",
-                                    "gender": data["gender"],
-                                    "dob": datetime.date(data["dob"]),
-                                    "email": data['email'],
+                                    "lastname": data['lastname'],
+                                    "password": make_password(data["password"], config("PASSWORD_KEY")),
                                     "mobile_no": data['mobile_no'],
                                     "address": data["address"],
                                     "occupation": data["occupation"],
@@ -63,16 +69,21 @@ class RegisterUserAPI(APIView):
                                     "aadhar_number": data["aadhar_number"],
                                     
                                     # "password": make_password(data["password"], config("PASSWORD_KEY")),
+                                    "email": data['email'],
+                                    "profile_pic": "",
                                     "is_approved": False,
                                     "is_active": False,
                                     "role": "parent_user",
-                                    # "registration_fee": False,
+                                    "registration_fee": False,
                                     "createdAt": datetime.datetime.now(),
                                     "updatedAt": "",
                                     "createdBy": "",
                                     "updatedBy": "",
                                 }
                                 db.community_members.insert_one(obj)
+                                subject = 'verify your email'
+                                message = 'OTP :' + obj["otp"]
+                                send_verification_mail(obj['email'] , subject , message)
                                 return onSuccess("Regitration Successful...", 1)
                             else:
                                 return badRequest("User already exist with same mobile or email, Please try again.")
@@ -86,6 +97,66 @@ class RegisterUserAPI(APIView):
                 return badRequest("Invalid last name, Please try again.")
         else:
             return badRequest("Invalid first name, Please try again.")
+
+
+#-------------------------- Verify OTP ----------------------------# (USER)
+class VerifyOtp(APIView):
+    def post(self,request):
+        data = request.data
+        if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+            if data['otp'] != '' and len(data['otp']) == 6:
+                user = db.community_members.find_one({'email': data['email']})
+                if user is not None:
+                    if data['otp'] == user['otp']:
+                        new_obj = {"$set": {
+                                "otp_verified": True,
+                                "updatedAt": datetime.datetime.now(),
+                            }
+                        }
+                        updateUser = db.community_members.find_one_and_update({"email": data['email'] , "otp": data['otp']} , new_obj)
+                        if updateUser:
+                            return onSuccess("Verified successfully." , 1)
+                        else:
+                            return badRequest("Invalid data to verify data, Please try again.")
+                    else:
+                        return badRequest("Invalid otp, Please try again.")
+                else:
+                    return badRequest("User does not exist with this email.")
+            else:
+                return badRequest("Invalid otp.")
+        else:
+            return badRequest("Invalid email id, Please try again.")
+
+#-------------------------- Resend OTP ----------------------------# (USER)
+class ResendOtp(APIView):
+    def post(self , request):
+        data = request.data
+        if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data['email']):
+            user = db.community_members.find_one({'email': data['email']})
+            if user is not None:
+                if not(user['is_active']):
+                    if not(user['otp_verified']):
+                        new_obj = {"$set": {
+                                "otp": generateOTP(),
+                                "updatedAt": datetime.datetime.now(),
+                            }
+                        }
+                        updateUser = db.community_members.find_one_and_update({"email": user['email']} , new_obj , return_document=ReturnDocument.AFTER)
+                        if updateUser:
+                            subject = 'verify your email'
+                            message = 'OTP :' + updateUser['otp']
+                            send_verification_mail(data['email'] , subject , message)
+                            return onSuccess("otp sent successfully.",1)    
+                        else:
+                            return badRequest("Invalid data to resend otp, Please try again.")
+                    else:
+                        return badRequest("Already verified.")
+                else:
+                    return badRequest("Already verified.")
+            else:
+                return badRequest("User does not exist with this email.")
+        else:
+            return badRequest("Invalid email id, Please try again.")
 
 
 #-------------------------- Login User ----------------------------# (USER)
@@ -253,10 +324,3 @@ class UserProfileAPI(APIView):
                 return badRequest("User not found.")
         else:
             return unauthorisedRequest()
-        
-
-#--------------------------- Apply for Community Services -----------------------#
-
-# class ApplyForCommunityServicesAPI(APIView):
-
-#     def 
