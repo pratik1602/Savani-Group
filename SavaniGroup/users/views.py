@@ -45,57 +45,87 @@ def generateOTP() :
 
 class RegisterUserAPI(APIView):
     def post(self, request):
+        blood_group = ['A+' , 'A-' , 'B+' , 'B-' , 'O+' , 'O-' , 'AB+' , 'AB-']    
         data = request.data
         if data['firstname'] != '' and len(data['firstname']) >= 3:
-            if data['lastname'] != '' and len(data['lastname']) >= 3:
-                if len(data['mobile_no']) == 10 and re.match("[6-9][0-9]{9}", data['mobile_no']):
-                    if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
-                        if data["password"] == data["confirm_password"]:
-                            existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
-                            if not existingUser:
-                                obj = {
-                                    "profile_pic": "",
-                                    "firstname": data['firstname'],
-                                    "middlename": data["middlename"],
-                                    "lastname": "Savani",
-                                    "gender": data["gender"],
-                                    "dob": datetime.date(data["dob"]),
-                                    "email": data['email'],
-                                    "mobile_no": data['mobile_no'],
-                                    "address": data["address"],
-                                    "occupation": data["occupation"],
-                                    "education": data["education"], 
-                                    "blood_group" : data["blood_group"],
-                                    "district": data["district"],
-                                    "taluka": data["taluka"],
-                                    "village_name": data["village_name"],
-                                    "marital_status": data["marital_status"],
-                                    "aadhar_number": data["aadhar_number"],
-                                    # "password": make_password(data["password"], config("PASSWORD_KEY")),
-                                    "is_approved": False,
-                                    "is_active": False,
-                                    "role": "parent_user",
-                                    # "registration_fee": False,
-                                    "createdAt": datetime.datetime.now(),
-                                    "updatedAt": "",
-                                    "createdBy": "",
-                                    "updatedBy": "",
-                                }
-                                db.community_members.insert_one(obj)
-                                subject = 'verify your email'
-                                message = 'OTP :' + obj["otp"]
-                                send_verification_mail(obj['email'] , subject , message)
-                                return onSuccess("Regitration Successful...", 1)
+            if data["middlename"] != '' and len(data["middlename"]) >= 3:
+                if data["gender"] and (data["gender"] == 'male' or data["gender"] == 'female'):
+                    if data["dob"]:
+                        if data["address"]:
+                            if data["occupation"] and (data["occupation"] == 'business' or data['occupation'] == 'job' or data['occupation'] == 'other'):
+                                if data["education"]:
+                                    if data["blood_group"] and (data["blood_group"] in blood_group):
+                                        if data["district"]:
+                                            if data["taluka"]:
+                                                if data["village_name"]:
+                                                    if data["marital_status"] and (data["marital_status"] == 'married' or data["marital_status"] == 'unmarried'):
+                                                        if data["aadhar_number"] and len(data["aadhar_number"]) == 12:
+                                                            if len(data['mobile_no']) == 10 and re.match("[6-9][0-9]{9}", data['mobile_no']):
+                                                                if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+                                                                    existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
+                                                                    if not existingUser:
+                                                                        obj = {
+                                                                            "profile_pic": "",
+                                                                            "firstname": data['firstname'],
+                                                                            "middlename": data["middlename"],
+                                                                            "lastname": "Savani",
+                                                                            "gender": data["gender"],
+                                                                            "dob": data["dob"],
+                                                                            "email": data['email'],
+                                                                            "mobile_no": data['mobile_no'],
+                                                                            "address": data["address"],
+                                                                            "occupation": data["occupation"],
+                                                                            "education": data["education"], 
+                                                                            "blood_group" : data["blood_group"],
+                                                                            "district": data["district"],
+                                                                            "taluka": data["taluka"],
+                                                                            "village_name": data["village_name"],
+                                                                            "marital_status": data["marital_status"],
+                                                                            "aadhar_number": data["aadhar_number"],
+                                                                            # "password": make_password(data["password"], config("PASSWORD_KEY")),
+                                                                            "is_approved": False,
+                                                                            "is_active": False,
+                                                                            "role": "parent_user",
+                                                                            "createdAt": datetime.datetime.now(),
+                                                                            "updatedAt": "",
+                                                                            "createdBy": "",
+                                                                            "updatedBy": "",
+                                                                        }
+                                                                        db.community_members.insert_one(obj)
+                                                                        # subject = 'verify your email'
+                                                                        # message = 'OTP :' + obj["otp"]
+                                                                        # send_verification_mail(obj['email'] , subject , message)
+                                                                        return onSuccess("Regitration Successful...", 1)
+                                                                    else:
+                                                                        return badRequest("User already exist with same mobile or email, Please try again.")
+                                                                else:
+                                                                    return badRequest("Invalid email id, Please try again.")
+                                                            else:
+                                                                return badRequest("Invalid mobile number, Please try again.")
+                                                        else:
+                                                            return badRequest("Invalid aadhar number, Please try again.")
+                                                    else:
+                                                        return badRequest("Invalid marital status, Please try again.")
+                                                else:
+                                                    return badRequest("Invalid village name, Please try again.")
+                                            else:
+                                                return badRequest("Invalid taluka, Please try again.")
+                                        else:
+                                            return badRequest("Invalid district, Please try again.")
+                                    else:
+                                        return badRequest("Invalid blood group, Please try again.")
+                                else:
+                                    return badRequest("Invalid education, Please try again.")
                             else:
-                                return badRequest("User already exist with same mobile or email, Please try again.")
+                                return badRequest("Invalid occupation, Please try again.")
                         else:
-                            return badRequest("Password and Confirm password doesn't matched.")
+                            return badRequest("Invalid address, Please try again.")
                     else:
-                        return badRequest("Invalid email id, Please try again.")
+                        return badRequest("Invalid dob, Please try again.")
                 else:
-                    return badRequest("Invalid mobile number, Please try again.")
+                    return badRequest("Invalid gender, Please try again.")
             else:
-                return badRequest("Invalid last name, Please try again.")
+                return badRequest("Invalid middle name, Please try again.")
         else:
             return badRequest("Invalid first name, Please try again.")
 
