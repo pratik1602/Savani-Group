@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from pymongo import MongoClient
+from pymongo import MongoClient , ReturnDocument
 from decouple import config
 from rest_framework.views import APIView
 from datetime import datetime
@@ -101,6 +101,66 @@ class RegisterUserAPI(APIView):
             return badRequest("Invalid first name, Please try again.")
 
 
+#-------------------------- Verify OTP ----------------------------# (USER)
+class VerifyOtp(APIView):
+    def post(self,request):
+        data = request.data
+        if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+            if data['otp'] != '' and len(data['otp']) == 6:
+                user = db.community_members.find_one({'email': data['email']})
+                if user is not None:
+                    if data['otp'] == user['otp']:
+                        new_obj = {"$set": {
+                                "otp_verified": True,
+                                "updatedAt": datetime.datetime.now(),
+                            }
+                        }
+                        updateUser = db.community_members.find_one_and_update({"email": data['email'] , "otp": data['otp']} , new_obj)
+                        if updateUser:
+                            return onSuccess("Verified successfully." , 1)
+                        else:
+                            return badRequest("Invalid data to verify data, Please try again.")
+                    else:
+                        return badRequest("Invalid otp, Please try again.")
+                else:
+                    return badRequest("User does not exist with this email.")
+            else:
+                return badRequest("Invalid otp.")
+        else:
+            return badRequest("Invalid email id, Please try again.")
+
+#-------------------------- Resend OTP ----------------------------# (USER)
+class ResendOtp(APIView):
+    def post(self , request):
+        data = request.data
+        if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data['email']):
+            user = db.community_members.find_one({'email': data['email']})
+            if user is not None:
+                if not(user['is_active']):
+                    if not(user['otp_verified']):
+                        new_obj = {"$set": {
+                                "otp": generateOTP(),
+                                "updatedAt": datetime.datetime.now(),
+                            }
+                        }
+                        updateUser = db.community_members.find_one_and_update({"email": user['email']} , new_obj , return_document=ReturnDocument.AFTER)
+                        if updateUser:
+                            subject = 'verify your email'
+                            message = 'OTP :' + updateUser['otp']
+                            send_verification_mail(data['email'] , subject , message)
+                            return onSuccess("otp sent successfully.",1)    
+                        else:
+                            return badRequest("Invalid data to resend otp, Please try again.")
+                    else:
+                        return badRequest("Already verified.")
+                else:
+                    return badRequest("Already verified.")
+            else:
+                return badRequest("User does not exist with this email.")
+        else:
+            return badRequest("Invalid email id, Please try again.")
+
+
 #-------------------------- Login User ----------------------------# (USER)
 
 class UserLoginAPI(APIView):
@@ -158,9 +218,6 @@ class AddandDeleteFamilyMembersAPI(APIView):
                                             "updatedBy": "",
                                         }
                                         db.community_members.insert_one(obj)
-                                        email = obj['email']
-                                        subject = "verify email"
-                                        message = "OTP :" + str(otp)
                                         return onSuccess("Family Member Added Successfully...", 1)
                                     else:
                                         return badRequest("User already exist with same mobile or email, Please try again.")
@@ -269,4 +326,3 @@ class UserProfileAPI(APIView):
                 return badRequest("User not found.")
         else:
             return unauthorisedRequest()
-        
