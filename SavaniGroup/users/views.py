@@ -54,9 +54,13 @@ class RegisterUserAPI(APIView):
                             existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
                             if not existingUser:
                                 obj = {
+                                    "profile_pic": "",
                                     "firstname": data['firstname'],
-                                    "lastname": data['lastname'],
-                                    "password": make_password(data["password"], config("PASSWORD_KEY")),
+                                    "middlename": data["middlename"],
+                                    "lastname": "Savani",
+                                    "gender": data["gender"],
+                                    "dob": datetime.date(data["dob"]),
+                                    "email": data['email'],
                                     "mobile_no": data['mobile_no'],
                                     "address": data["address"],
                                     "occupation": data["occupation"],
@@ -67,14 +71,11 @@ class RegisterUserAPI(APIView):
                                     "village_name": data["village_name"],
                                     "marital_status": data["marital_status"],
                                     "aadhar_number": data["aadhar_number"],
-                                    
                                     # "password": make_password(data["password"], config("PASSWORD_KEY")),
-                                    "email": data['email'],
-                                    "profile_pic": "",
                                     "is_approved": False,
                                     "is_active": False,
                                     "role": "parent_user",
-                                    "registration_fee": False,
+                                    # "registration_fee": False,
                                     "createdAt": datetime.datetime.now(),
                                     "updatedAt": "",
                                     "createdBy": "",
