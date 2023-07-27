@@ -61,6 +61,7 @@ class RegisterUserAPI(APIView):
                                     "village_name": data["village_name"],
                                     "marital_status": data["marital_status"],
                                     "aadhar_number": data["aadhar_number"],
+                                    
                                     # "password": make_password(data["password"], config("PASSWORD_KEY")),
                                     "is_approved": False,
                                     "is_active": False,
