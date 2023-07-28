@@ -59,49 +59,54 @@ class RegisterUserAPI(APIView):
                                             if data["taluka"]:
                                                 if data["village_name"]:
                                                     if data["marital_status"] and (data["marital_status"] == 'married' or data["marital_status"] == 'unmarried'):
-                                                        if data["aadhar_number"] and len(data["aadhar_number"]) == 12:
-                                                            if len(data['mobile_no']) == 10 and re.match("[6-9][0-9]{9}", data['mobile_no']):
-                                                                if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
-                                                                    existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
-                                                                    if not existingUser:
-                                                                        obj = {
-                                                                            "profile_pic": "",
-                                                                            "firstname": data['firstname'],
-                                                                            "middlename": data["middlename"],
-                                                                            "lastname": "Savani",
-                                                                            "gender": data["gender"],
-                                                                            "dob": data["dob"],
-                                                                            "email": data['email'],
-                                                                            "mobile_no": data['mobile_no'],
-                                                                            "address": data["address"],
-                                                                            "occupation": data["occupation"],
-                                                                            "education": data["education"], 
-                                                                            "blood_group" : data["blood_group"],
-                                                                            "district": data["district"],
-                                                                            "taluka": data["taluka"],
-                                                                            "village_name": data["village_name"],
-                                                                            "marital_status": data["marital_status"],
-                                                                            "aadhar_number": data["aadhar_number"],
-                                                                            # "password": make_password(data["password"], config("PASSWORD_KEY")),
-                                                                            "is_approved": False,
-                                                                            "is_active": False,
-                                                                            "role": "parent_user",
-                                                                            "createdAt": datetime.datetime.now(),
-                                                                            "updatedAt": "",
-                                                                            "createdBy": "",
-                                                                            "updatedBy": "",
-                                                                        }
-                                                                        db.community_members.insert_one(obj)
-                                                                        # subject = 'verify your email'
-                                                                        # message = 'OTP :' + obj["otp"]
-                                                                        # send_verification_mail(obj['email'] , subject , message)
-                                                                        return onSuccess("Regitration Successful...", 1)
+                                                        if data["aadhar_number"] and len(data["aadhar_number"]) == 12 and data['aadhar_number'].isnumeric():
+                                                            if data['country_code'] and re.match(r'^\+\d{1,3}$' , data['country_code']):
+                                                                if data['iso_code'] and data['iso_code'].isalpha() and (len(data['iso_code']) == 2 or len(data['iso_code']) == 3):
+                                                                    if data['mobile_no'].isnumeric():
+                                                                        if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
+                                                                            existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}]})
+                                                                            if not existingUser:
+                                                                                obj = {
+                                                                                    "profile_pic": "",
+                                                                                    "firstname": data['firstname'],
+                                                                                    "middlename": data["middlename"],
+                                                                                    "lastname": "Savani",
+                                                                                    "gender": data["gender"],
+                                                                                    "dob": data["dob"],
+                                                                                    "email": data['email'],
+                                                                                    "mobile_no": data['mobile_no'],
+                                                                                    "address": data["address"],
+                                                                                    "occupation": data["occupation"],
+                                                                                    "education": data["education"], 
+                                                                                    "blood_group" : data["blood_group"],
+                                                                                    "district": data["district"],
+                                                                                    "taluka": data["taluka"],
+                                                                                    "village_name": data["village_name"],
+                                                                                    "marital_status": data["marital_status"],
+                                                                                    "aadhar_number": data["aadhar_number"],
+                                                                                    # "password": make_password(data["password"], config("PASSWORD_KEY")),
+                                                                                    "is_approved": False,
+                                                                                    "is_active": False,
+                                                                                    "registration_fees": False,
+                                                                                    "mobile_verified": False,
+                                                                                    "role": "parent_user",
+                                                                                    "createdAt": datetime.datetime.now(),
+                                                                                    "updatedAt": "",
+                                                                                    "createdBy": "",
+                                                                                    "updatedBy": "",
+                                                                                }
+                                                                                db.community_members.insert_one(obj)
+                                                                                return onSuccess("Regitration Successful...", 1)
+                                                                            else:
+                                                                                return badRequest("User already exist with same mobile or email, Please try again.")
+                                                                        else:
+                                                                            return badRequest("Invalid email id, Please try again.")
                                                                     else:
-                                                                        return badRequest("User already exist with same mobile or email, Please try again.")
+                                                                        return badRequest("Invalid mobile number, Please try again.")
                                                                 else:
-                                                                    return badRequest("Invalid email id, Please try again.")
+                                                                    return badRequest("Invalid iso code, Please try again.")
                                                             else:
-                                                                return badRequest("Invalid mobile number, Please try again.")
+                                                                return badRequest("Invalid country code,Please try again.")
                                                         else:
                                                             return badRequest("Invalid aadhar number, Please try again.")
                                                     else:
