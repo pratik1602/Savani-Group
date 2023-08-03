@@ -5,11 +5,8 @@ urlpatterns = [
     #------------------- Register User --------------------#
     path('register-user', RegisterUserAPI.as_view(), name="RegisterUserAPI"),
 
-    #------------------- Verify email --------------------#
-    path('verify-email' , VerifyOtp.as_view() , name='VerifyOtp'),
-
-    #------------------- Resend otp --------------------#
-    path('resend-otp' , ResendOtp.as_view() , name='ResendOtp'),
+    #------------------- Verify mobile number --------------------#
+    path('verify-mobile' , VerifyMobilenumber.as_view() , name='VerifyMobilenumber'),
 
     #------------------- Add / Delete Family Members -------------#
     path('add-member', AddandDeleteFamilyMembersAPI.as_view(), name="AddandDeleteFamilyMembersAPI"),
@@ -18,8 +15,9 @@ urlpatterns = [
     #------------------ List Family Members -----------------#
     path('family-members', ListFamilyMembersAPI.as_view(), name="ListFamilyMembersAPI"),
 
-    #------------------- Login User ------------------------#
-    path('user-login', UserLoginAPI.as_view(), name="UserLoginAPI"),
+    #------------------- User login and logout ------------------------#
+    path('user-login', UserLogin.as_view(), name="UserLogin"),
+    path('login-verify', UserLoginVerify.as_view() , name='UserLoginVerify'),
 
     #------------ User Profile View, Update and Delete ----------#
     path('profile-view', UserProfileAPI.as_view(), name="UserProfileAPI"),

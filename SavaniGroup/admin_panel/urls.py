@@ -25,5 +25,10 @@ urlpatterns = [
     #------------------- Approve Community Members ------------#
     path('approve-member', ApproveCommunityMembersAPI.as_view(), name="ApproveCommunityMembersAPI"),
 
+    #------------------- Add Authority Members ------------#
+    path('add-auth-member', AddAuthorityMembers.as_view(), name="AddAuthorityMembers"),
+
+    #------------------ Get All President shri -------------#
+    path('president-shre',GetAllPresidentShree.as_view() , name='GetAllPresidentShree'),
 
 ]
