@@ -54,6 +54,13 @@ cloudinary.config(
     api_secret=config('API_SECRET')         # Replace with your Cloudinary api_secret
 )
 
+
+def upload_aadhar(aadhar_img):
+    result = cloudinary.uploader.upload(aadhar_img, resource_type="image", folder="Savani_Group/Community_members/aadhar")    
+    img_url = result["secure_url"]
+
+    return img_url
+
 # Function to upload PDF document to Cloudinary and return the URL
 def upload_pdf_to_cloudinary(pdf_file_path):
     # Store Pdf with convert_from_path function
