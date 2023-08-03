@@ -93,7 +93,6 @@ class LoginAdminAPI(APIView):
         else:
             return badRequest("Invalid mobile number or email.")
         
-
 #-------------------------- View/Update Admin Profile -------------------#
 
 class AdminProfileAPI(APIView):
@@ -240,3 +239,65 @@ class ApproveCommunityMembersAPI(APIView):
         else:
             return unauthorisedRequest()
 
+#------------------------------ Add/Delete authority members -----------------------#
+
+class AddAuthorityMembers(APIView):
+
+    def post(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            data = request.data
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                if data['firstname'] and data['firstname'] != '' and len(data['firstname']) >= 3:
+                    if data['middlename'] and data['middlename'] != '':
+                        if data['villagename'] and data['villagename'] != '':
+                            if data['role'] and data['role'] != '':
+                                if data['designation']:
+                                    obj = {
+                                        "firstname": data['firstname'],
+                                        "middlename": data['middlename'],
+                                        "lastname": 'Savani',
+                                        "village": data['villagename'],
+                                        "role": data['role'],
+                                        "designation": data['designation'],
+                                        "authority_person": True,
+                                        "is_active": False,
+                                        "createdAt": datetime.datetime.now(),
+                                        "createdBy": get_admin['_id'],
+                                        "updatedAt": "",
+                                        "updatedBy": "",
+                                    }
+                                    db.community_members.insert_one(obj)
+                                    return onSuccess("Add successfully",1)
+                                else:
+                                    return badRequest('Invalid designation, Please try again.')
+                            else:
+                                return badRequest('Invalid role, Please try again.')
+                        else:
+                            return badRequest('Invalid village name, Please try again.')
+                    else:
+                        return badRequest('Invalid middle name, Please try again.')
+                else:
+                    return badRequest('Invalid firstname, Please try again.')                        
+            else:
+                return badRequest('Admin not found.')
+        else:
+            return unauthorisedRequest()
+
+class GetAllPresidentShree(APIView):
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            get_user = db.community_members.find_one({"_id": ObjectId(token["_id"]) , "is_active":True}) or db.admin.find_one({"_id": ObjectId(token["_id"]) , "is_active":True , "is_admin": True})
+            if get_user is not None:
+                role = request.GET.get('role')
+                if role and role != '':
+                    get_all_president = valuesEntity(db.community_members.find({"role": role}, {"authority_person": 0, "createdAt": 0 , "createdBy": 0 , "is_active": 0 , "_id": 0 , "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                    return onSuccess("List of all authority members",get_all_president)
+                else:
+                    return badRequest('Invalid role, Please try again.')
+            else:
+                return badRequest('User not found.')
+        else:   
+            return unauthorisedRequest()

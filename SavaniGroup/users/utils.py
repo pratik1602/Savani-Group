@@ -1,7 +1,20 @@
-from django.core.mail import send_mail
+import requests
 from django.conf import settings
 
-def send_verification_mail(email , subject , message):
-  host_email = settings.EMAIL_HOST_USER
-  send_mail(subject , message , host_email , [email])
-  return True
+def send_otp(mobile_number , otp):
+  admin = str(settings.SEND_OTP_URL) + mobile_number + '/' + otp
+  payload={}
+  headers = {}
+  response = requests.request('GET' , admin , headers=headers , data=payload)
+  if response.status_code == 200:
+    return True
+  return False
+
+def verify_otp(mobile_number , otp):
+  admin = str(settings.VERIFY_OTP_URL) + mobile_number + '/' + otp
+  payload={}
+  headers = {}
+  response = requests.request('GET' , admin , headers=headers , data=payload)
+  if response.status_code == 200:
+    return True
+  return False
