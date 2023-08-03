@@ -45,6 +45,7 @@ def generateOTP() :
 
 class RegisterUserAPI(APIView):
     def post(self, request):
+        blood_group = ['A+' , 'A-' , 'B+' , 'B-' , 'O+' , 'O-' , 'AB+' , 'AB-']
         data = request.data
         if data['firstname'] != '' and len(data['firstname']) >= 3:
             if data["middlename"] != '' and len(data["middlename"]) >= 3:
