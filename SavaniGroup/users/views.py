@@ -129,15 +129,15 @@ class RegisterUserAPI(APIView):
                                 else:
                                     return badRequest("Invalid education, Please try again.")
                             else:
-                                return badRequest("User already exist with same mobile or email, Please try again.")
+                                return badRequest("Invalid occupation, Please try again.")
                         else:
-                            return badRequest("Password and Confirm password doesn't matched.")
+                            return badRequest("Invalid address, Please try again.")
                     else:
-                        return badRequest("Invalid email id, Please try again.")
+                        return badRequest("Invalid dob, Please try again.")
                 else:
-                    return badRequest("Invalid mobile number, Please try again.")
+                    return badRequest("Invalid gender, Please try again.")
             else:
-                return badRequest("Invalid last name, Please try again.")
+                return badRequest("Invalid middle name, Please try again.")
         else:
             return badRequest("Invalid first name, Please try again.")
         
