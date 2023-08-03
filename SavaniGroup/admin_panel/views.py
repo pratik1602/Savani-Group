@@ -93,7 +93,6 @@ class LoginAdminAPI(APIView):
         else:
             return badRequest("Invalid mobile number or email.")
         
-
 #-------------------------- View/Update Admin Profile -------------------#
 
 class AdminProfileAPI(APIView):
