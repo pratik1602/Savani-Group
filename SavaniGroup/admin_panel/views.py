@@ -229,7 +229,7 @@ class ApproveCommunityMembersAPI(APIView):
                         }   
                         }
                         db.community_members.find_one_and_update({"_id": ObjectId(get_community_member["_id"])}, obj)
-                        return onSuccess("Communiy member approved successfully.", 1)
+                        return onSuccess("Community member approved successfully.", 1)
                     else:
                         return badRequest("Community member not found or not active or not paid registration fees.")
                 else:
