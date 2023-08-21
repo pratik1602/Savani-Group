@@ -162,53 +162,53 @@ class GetAllCommunityMembersAPI(APIView):
             return unauthorisedRequest()
 
 
-#--------------------- Add Community Services --------------------#
-# from io import BytesIO
+# #--------------------- Add Community Services --------------------#
+# # from io import BytesIO
 
 
-class AddCommunitySerivicesAPI(APIView):
+# class AddCommunitySerivicesAPI(APIView):
 
-    def post(self, request):
-        token = authenticate(request)
-        if token and ObjectId().is_valid(token["_id"]):
-            data = request.data
-            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
-            if get_admin is not None:
-                pdf = request.FILES["pdf_form"]
-                pdf_url = upload_pdf_to_cloudinary(pdf)
-                obj = {
-                    "scheme_name": data["scheme_name"],
-                    "pdf_form": pdf_url,
-                    "createdBy": ObjectId(token["_id"]),
-                    "createdAt": datetime.datetime.now(),
-                    "updatedAt": "",
-                }
-                db.community_services.insert_one(obj)
-                return onSuccess("Scheme added successfully.", 1)
-            else:
-                return badRequest("Admin not found.")
-        else:
-            return unauthorisedRequest()
+#     def post(self, request):
+#         token = authenticate(request)
+#         if token and ObjectId().is_valid(token["_id"]):
+#             data = request.data
+#             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+#             if get_admin is not None:
+#                 pdf = request.FILES["pdf_form"]
+#                 pdf_url = upload_pdf_to_cloudinary(pdf)
+#                 obj = {
+#                     "scheme_name": data["scheme_name"],
+#                     "pdf_form": pdf_url,
+#                     "createdBy": ObjectId(token["_id"]),
+#                     "createdAt": datetime.datetime.now(),
+#                     "updatedAt": "",
+#                 }
+#                 db.community_services.insert_one(obj)
+#                 return onSuccess("Scheme added successfully.", 1)
+#             else:
+#                 return badRequest("Admin not found.")
+#         else:
+#             return unauthorisedRequest()
 
 
 #--------------------------- Get Community Servives --------------------# (ADMIN, USER)
 
-class GetCommunityServicesAPI(APIView):
+# class GetCommunityServicesAPI(APIView):
 
-    def get(self, request):
-        token = authenticate(request)
-        if token and ObjectId().is_valid(token["_id"]):
-            get_user = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}) or db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_active":True}) 
-            if get_user is not None:
-                get_Community_services = valuesEntity(db.community_services.find())
-                if get_Community_services:
-                    return onSuccess("Community services.", get_Community_services)
-                else:
-                    return badRequest("No Community services found.")
-            else:
-                return badRequest("Admin not found.")
-        else:
-            return unauthorisedRequest()
+#     def get(self, request):
+#         token = authenticate(request)
+#         if token and ObjectId().is_valid(token["_id"]):
+#             get_user = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}) or db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_active":True}) 
+#             if get_user is not None:
+#                 get_Community_services = valuesEntity(db.community_services.find())
+#                 if get_Community_services:
+#                     return onSuccess("Community services.", get_Community_services)
+#                 else:
+#                     return badRequest("No Community services found.")
+#             else:
+#                 return badRequest("Admin not found.")
+#         else:
+#             return unauthorisedRequest()
 
 
 #------------------------------ Approve Community Members -----------------------#
