@@ -166,7 +166,7 @@ class GetAllCommunityMembersAPI(APIView):
 # from io import BytesIO
 
 
-class AddandGetCommunitySerivicesAPI(APIView):
+class AddCommunitySerivicesAPI(APIView):
 
     def post(self, request):
         token = authenticate(request)

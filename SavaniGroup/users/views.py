@@ -267,7 +267,7 @@ class AddandDeleteFamilyMembersAPI(APIView):
             if parent_user:
                 if data['fullname'] != '' and data['fullname'].isalpha():
                     if data['relation'] and data['relation'] != '' and  data['relation'].isalpha():
-                        if data["marital_status"] and (data["marital_status"] == 'married' or data["marital_status"] == 'unmarried'):
+                        if data["marital_status"] and (data["marital_status"] == 'married' or data["marital_status"] == 'unmarried' or data["marital_status"] == 'widow'):
                             if data["education"]:
                                 if data["occupation"] and (data["occupation"] == 'business' or data['occupation'] == 'job' or data['occupation'] == 'other'):
                                     if data["aadhar_number"] and len(data["aadhar_number"]) == 12 and data['aadhar_number'].isnumeric():
@@ -344,7 +344,7 @@ class ListFamilyMembersAPI(APIView):
             parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
             if parent_user:
                 filter = {"createdBy": ObjectId(parent_user["_id"])}
-                family_members = valuesEntity(db.community_members.find(filter, {"_id": 0, "password": 0, "createdBy": 0, "updatedBy": 0, "is_approved": 0, "createdAt": 0,"updatedAt": 0, "is_active": 0, "role":0}))
+                family_members = valuesEntity(db.community_members.find(filter, {"password": 0, "createdBy": 0, "updatedBy": 0, "is_approved": 0, "createdAt": 0,"updatedAt": 0, "is_active": 0, "role":0}))
                 if family_members:
                     return onSuccess("Family Members List.", family_members)
                 else:
