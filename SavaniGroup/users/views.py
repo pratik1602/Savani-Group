@@ -298,7 +298,7 @@ class AddandDeleteFamilyMembersAPI(APIView):
                                             db.community_members.insert_one(obj)
                                             return onSuccess("Family Member Added Successfully...", 1)
                                         else:
-                                            return badRequest("Family member already exist.")
+                                            return badRequest("Family member already exist with aadhar number.")
                                     else:
                                         return badRequest("Invalid aadhar number, Please try again.")
                                 else:
@@ -404,5 +404,95 @@ class UserProfileAPI(APIView):
                 return onSuccess("Profile deleted successfully.", 1)
             else:
                 return badRequest("User not found.")
+        else:
+            return unauthorisedRequest()
+        
+#-------------------- Upload Result ----------------------#
+
+# class ResultCRUDApiView(APIView):
+
+#     def post(self, request):
+#         token = authenticate(request)
+#         if token and ObjectId().is_valid(token["_id"]):
+#             parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+#             if parent_user is not None and parent_user:
+#                 data = request.data
+#                 get_family_memer = db.community_members.find_one({"_id": ObjectId(data["_id"]), "role": "child_user"})
+#                 if get_family_memer is not None and get_family_memer:
+#                     obj = {
+#                         "family_member": get_family_memer["_id"],
+#                         "medium": data["medium"],
+#                         "standard": data["standard"],
+#                         "stream":data["stream"],
+#                         "percentage" : data["percentage"],
+#                         "result_photo": data["result_photo"],
+#                         "approval_status" : "pending",
+#                         "createdBy": parent_user["_id"],
+#                         "updatedBy": "",
+#                     }
+#                     db.student_results.insert_one(obj)
+#                     return onSuccess("Result uploaded Successfully...", 1)
+#                 else:
+#                     return badRequest("Family member not found.")
+#             else:
+#                 return badRequest("Root User not found.")
+#         else:
+#             return unauthorisedRequest()
+
+class UploadResultAPI(APIView):
+
+    def post(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+            if parent_user:
+                data = request.data
+                if data['family_member']:
+                    family_member = db.community_members.find_one({"_id": ObjectId(data['family_member']) , "createdBy": parent_user['_id']  , 'role': 'child_user'})
+                    if family_member:
+                        if data['medium']:
+                            if data['standard']:
+                                if data['field'] or data['field'] == "":
+                                    if data['percentage']:
+                                        if data['result'] or data['result'] == "":
+                                            existingResult = db.student_results.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id']})
+                                            if not existingResult:
+                                                obj = {
+                                                    "parent_user": parent_user['_id'],
+                                                    "family_member": family_member['_id'],
+                                                    "medium": data['medium'],
+                                                    "standard": data['standard'],
+                                                    "field": data['field'],
+                                                    "percentage": data['percentage'],
+                                                    "result": data['result'],
+                                                    "status": "inprogress",
+                                                    "createdAt": datetime.datetime.now(),
+                                                    "updatedAt": "",
+                                                    "createdBy": parent_user["_id"],
+                                                    "updatedBy": "",
+                                                }
+                                                result = db.student_results.insert_one(obj)
+                                                if result:
+                                                    return onSuccess("Result upload successfully, Please wait for admin approvel.", 1)
+                                                else:
+                                                    return badRequest("Server error.")
+                                            else:
+                                                return badRequest("You have already uploaded a result for this member.")
+                                        else:
+                                            return badRequest('Invalid result, Please try again.')
+                                    else:
+                                        return badRequest('Invalid percentage, Please try again.')
+                                else:
+                                    return badRequest('Invalid field, Please try again.')
+                            else:
+                                return badRequest('Invalid standard, Please try again.')
+                        else:
+                            return badRequest('Invalid medium, Please try again.')
+                    else:
+                        return badRequest('Family member not found.')
+                else:
+                    return badRequest('Please select family member.')
+            else:
+                return badRequest('User not found.')
         else:
             return unauthorisedRequest()

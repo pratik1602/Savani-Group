@@ -24,4 +24,8 @@ urlpatterns = [
     path('profile-edit', UserProfileAPI.as_view(), name="UserProfileAPI"),
     path('profile-delete', UserProfileAPI.as_view(), name="UserProfileAPI"),
 
+    #--------------- Upload Student Results ---------------------#
+    path('upload-result', UploadResultAPI.as_view(), name="UploadResultAPI"),
+
+
 ]
