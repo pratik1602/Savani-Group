@@ -416,7 +416,7 @@ class UploadResultAPI(APIView):
         if token and ObjectId().is_valid(token['_id']):
             parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
             if parent_user:
-                results = valuesEntity(db.student_results.find({'parent_user': parent_user['_id']}, {"createdAt": 0, "updatedAt": 0 , "createdBy": 0 , "updatedBy": 0}).sort("percentage", -1))
+                results = valuesEntity(db.student_results.find({'parent_user': parent_user['_id']}, {"updatedAt": 0 , "createdBy": 0 , "updatedBy": 0}).sort('createdAt' , -1))
                 return onSuccess("Results, " , results)
             else:
                 return badRequest('User not found.')
