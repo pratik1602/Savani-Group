@@ -409,37 +409,19 @@ class UserProfileAPI(APIView):
         
 #-------------------- Upload Result ----------------------#
 
-# class ResultCRUDApiView(APIView):
-
-#     def post(self, request):
-#         token = authenticate(request)
-#         if token and ObjectId().is_valid(token["_id"]):
-#             parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
-#             if parent_user is not None and parent_user:
-#                 data = request.data
-#                 get_family_memer = db.community_members.find_one({"_id": ObjectId(data["_id"]), "role": "child_user"})
-#                 if get_family_memer is not None and get_family_memer:
-#                     obj = {
-#                         "family_member": get_family_memer["_id"],
-#                         "medium": data["medium"],
-#                         "standard": data["standard"],
-#                         "stream":data["stream"],
-#                         "percentage" : data["percentage"],
-#                         "result_photo": data["result_photo"],
-#                         "approval_status" : "pending",
-#                         "createdBy": parent_user["_id"],
-#                         "updatedBy": "",
-#                     }
-#                     db.student_results.insert_one(obj)
-#                     return onSuccess("Result uploaded Successfully...", 1)
-#                 else:
-#                     return badRequest("Family member not found.")
-#             else:
-#                 return badRequest("Root User not found.")
-#         else:
-#             return unauthorisedRequest()
-
 class UploadResultAPI(APIView):
+
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+            if parent_user:
+                results = valuesEntity(db.student_results.find({'parent_user': parent_user['_id']}, {"createdAt": 0, "updatedAt": 0 , "createdBy": 0 , "updatedBy": 0}).sort("percentage", -1))
+                return onSuccess("Results, " , results)
+            else:
+                return badRequest('User not found.')
+        else:
+            return unauthorisedRequest()
 
     def post(self , request):
         token = authenticate(request)
@@ -451,9 +433,9 @@ class UploadResultAPI(APIView):
                     family_member = db.community_members.find_one({"_id": ObjectId(data['family_member']) , "createdBy": parent_user['_id']  , 'role': 'child_user'})
                     if family_member:
                         if data['medium']:
-                            if data['standard']:
+                            if data['standard'] and (data['standard'] >= 1 and data['standard'] <=12):
                                 if data['field'] or data['field'] == "":
-                                    if data['percentage']:
+                                    if data['percentage'] and (data['percentage'] >= 0 and data['percentage'] <= 100):
                                         if data['result'] or data['result'] == "":
                                             existingResult = db.student_results.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id']})
                                             if not existingResult:
@@ -465,7 +447,7 @@ class UploadResultAPI(APIView):
                                                     "field": data['field'],
                                                     "percentage": data['percentage'],
                                                     "result": data['result'],
-                                                    "status": "inprogress",
+                                                    "status": "inprocess",
                                                     "createdAt": datetime.datetime.now(),
                                                     "updatedAt": "",
                                                     "createdBy": parent_user["_id"],
@@ -495,4 +477,23 @@ class UploadResultAPI(APIView):
             else:
                 return badRequest('User not found.')
         else:
+            return unauthorisedRequest()
+
+
+class QualifiedStudentListAPI(APIView):
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            user = db.community_members.find_one({"_id": ObjectId(token["_id"]) , "registration_fees": True , "is_approved": True, "is_active":True , "role": "parent_user"}) or db.admin.find_one({"_id": ObjectId(token["_id"]) , "is_active":True , "is_admin": True})
+            if user is not None:
+                standard = request.GET.get('standard')
+                field = request.GET.get('field')
+                if standard and standard != '':
+                    results = valuesEntity(db.student_results.find({"standard": int(standard) , "field" : field ,"status" : "completed"}, {"createdAt": 0, "updatedAt": 0 , "createdBy": 0 , "updatedBy": 0}).sort("percentage", -1))
+                    return onSuccess("List of qualified students",results)
+                else:
+                    return badRequest('Invalid role, Please try again.')
+            else:
+                return badRequest('User not found.')
+        else:   
             return unauthorisedRequest()
