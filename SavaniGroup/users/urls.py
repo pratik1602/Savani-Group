@@ -29,8 +29,7 @@ urlpatterns = [
     path('qualified-student', QualifiedStudentListAPI.as_view(), name="QualifiedStudentListAPI"),
 
     #--------------- Apply for Community Services ---------------------#
+    path('education-help', EducationScolarshipAPI.as_view() , name='EducationScolarshipAPI'),
     path('vidhva-sahay', WidowWomenHelpAPI.as_view(), name="WidowWomenHelpAPI"),
-    
-
 
 ]
