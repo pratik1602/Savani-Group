@@ -457,7 +457,7 @@ class UploadResultAPI(APIView):
                                                 if result:
                                                     return onSuccess("Result upload successfully, Please wait for admin approvel.", 1)
                                                 else:
-                                                    return badRequest("Server error.")
+                                                    return onError("Server error.")
                                             else:
                                                 return badRequest("You have already uploaded a result for this member.")
                                         else:
@@ -478,7 +478,9 @@ class UploadResultAPI(APIView):
                 return badRequest('User not found.')
         else:
             return unauthorisedRequest()
+        
 
+#-------------------- Qualified student list who deserve price ----------------------#
 
 class QualifiedStudentListAPI(APIView):
     def get(self , request):
@@ -496,4 +498,118 @@ class QualifiedStudentListAPI(APIView):
             else:
                 return badRequest('User not found.')
         else:   
+            return unauthorisedRequest()
+        
+
+services = ["student_education_help", "widow_women_help", "health_related_help", "family_widow_daughter_help"]
+
+class EducationScolarshipAPI(APIView):
+
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+            if parent_user:
+                service_name = request.GET.get('service_name')
+                if service_name in services:
+                    applid_services = valuesEntity(db.community_services.find({'parent_user': parent_user['_id'] , 'service': service_name} , {'family_member':1 , '12_result':1 , 'for':1 , 'status':1 , 'createdAt':1}))
+                    return onSuccess("Information of service" , applid_services)
+                else:
+                    return badRequest('Invalid service, Please try again.')
+            else:
+                return badRequest('User not found.')
+        else:
+            return unauthorisedRequest()
+
+    def post(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+            if parent_user:
+                data = request.data               
+                if data['family_member_id'] and ObjectId().is_valid(data['family_member_id']):
+                    family_member = db.community_members.find_one({"_id": ObjectId(data['family_member_id']) , "createdBy": parent_user['_id']  , 'role': 'child_user'})
+                    if family_member:
+                        if data['service'] in services and data['service'] == 'student_education_help':
+                            if data['age']:
+                                if data['address']:
+                                    if data['district']:
+                                        if data['taluka']:
+                                            if data['village']:
+                                                if data['family_member_number']:
+                                                    if data['father_number']:
+                                                        if data['father_occupation']:
+                                                            if data['12_result']:
+                                                                if data['for']:
+                                                                    if data['course_name']:
+                                                                        if data['college_name']:
+                                                                            if data['course_duration']:
+                                                                                alreadyappliedforservice = db.community_services.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id']})
+                                                                                if not alreadyappliedforservice:
+                                                                                    obj = {
+                                                                                        "parent_user": parent_user['_id'],
+                                                                                        "family_member": family_member['_id'],
+                                                                                        "service": data['service'],
+                                                                                        "age": data['age'],
+                                                                                        "address": data['address'],
+                                                                                        "district": data['district'],
+                                                                                        "taluka": data['taluka'],
+                                                                                        "village": data['village'],
+                                                                                        "family_member_number": data['service'],
+                                                                                        "father_number": data['father_number'],
+                                                                                        "father_occupation": data['father_occupation'],
+                                                                                        "12_result": data['12_result'],
+                                                                                        "for": data['for'],
+                                                                                        "course_name": data['course_name'],
+                                                                                        "college_name": data['college_name'],
+                                                                                        "fees": data['fees'],
+                                                                                        "course_duration": data['course_duration'],
+                                                                                        "status": "inprocess",
+                                                                                        "createdAt": datetime.datetime.now(),
+                                                                                        "createdBy": parent_user['_id'],
+                                                                                        "updatedAt": "",
+                                                                                        "updatedBy": "",
+                                                                                    } 
+                                                                                    service = db.community_services.insert_one(obj)
+                                                                                    if service:
+                                                                                        return onSuccess('Applied successfully.' , 1)
+                                                                                    else:
+                                                                                        return onError('Server error, try again.')
+                                                                                else:
+                                                                                    return badRequest('Already applied for service.')
+                                                                            else:
+                                                                                return badRequest('Invalid course duration, Please try again.')
+                                                                        else:
+                                                                            return badRequest('Invalid college name, Please try again.')
+                                                                    else:
+                                                                        return badRequest('Invalid course name, Please try again.')
+                                                                else:
+                                                                    return badRequest('Invalid education, Please try again.')
+                                                            else:
+                                                                return badRequest('Invalid result, Please try again.')
+                                                        else:
+                                                            return badRequest('Invalid occupation, Please try again.')
+                                                    else:
+                                                        return badRequest('Invalid mobile number, Please try again.')
+                                                else:
+                                                    return badRequest('Invalid mobile number, Please try again.')
+                                            else:
+                                                return badRequest('Invalid village name, Please try again.')
+                                        else:
+                                            return badRequest('Invalid taluka, Please try again.')
+                                    else:
+                                        return badRequest('Invalid district, Please try again.')
+                                else:
+                                    return badRequest('Invalid address, Please try again.')
+                            else:
+                                return badRequest('Invalid age, Please try again.')
+                        else:
+                            return badRequest('Invalid service, Please try again.')
+                    else:
+                        return badRequest('Famil member not found.')
+                else:
+                    return badRequest('Invalid family member id, Please try again.')                
+            else:
+                return badRequest('User not found.')
+        else:
             return unauthorisedRequest()
