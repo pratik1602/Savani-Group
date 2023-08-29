@@ -544,8 +544,10 @@ class QualifiedStudentListAPI(APIView):
         else:   
             return unauthorisedRequest()
         
+# ------------------------------ Community Services ------------------------------# (USER)
 
-services = ["student_education_help", "widow_women_help", "health_related_help", "family_widow_daughter_help"]
+services = ["student_education_help", "widow_women_help",
+            "health_related_help", "family_widow_daughter_help"]
 
 class EducationScolarshipAPI(APIView):
 
@@ -657,13 +659,6 @@ class EducationScolarshipAPI(APIView):
                 return badRequest('User not found.')
         else:
             return unauthorisedRequest()
-
-
-# ------------------------------ Community Services ------------------------------# (USER)
-
-services = ["student_education_help", "widow_women_help",
-            "health_related_help", "family_widow_daughter_help"]
-
 
 class WidowWomenHelpAPI(APIView):
 
