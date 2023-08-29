@@ -28,5 +28,9 @@ urlpatterns = [
     path('upload-result', UploadResultAPI.as_view(), name="UploadResultAPI"),
     path('qualified-student', QualifiedStudentListAPI.as_view(), name="QualifiedStudentListAPI"),
 
+    #--------------- Apply for Community Services ---------------------#
+    path('vidhva-sahay', WidowWomenHelpAPI.as_view(), name="WidowWomenHelpAPI"),
+    
+
 
 ]
