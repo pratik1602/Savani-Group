@@ -454,8 +454,9 @@ class UploadResultAPI(APIView):
             parent_user = db.community_members.find_one({"_id": ObjectId(
                 token["_id"]), "is_approved": True, "is_active": True, "registration_fees": True, "role": "parent_user"})
             if parent_user:
-                results = valuesEntity(db.student_results.find({'parent_user': parent_user['_id']}, {"updatedAt": 0 , "createdBy": 0 , "updatedBy": 0}).sort('createdAt' , -1))
-                return onSuccess("Results, " , results)
+                results = valuesEntity(db.student_results.find({'parent_user': parent_user['_id']}, {
+                                       "updatedAt": 0, "createdBy": 0, "updatedBy": 0}).sort('createdAt', -1))
+                return onSuccess("Results, ", results)
             else:
                 return badRequest('User not found.')
         else:
@@ -520,9 +521,9 @@ class UploadResultAPI(APIView):
                 return badRequest('User not found.')
         else:
             return unauthorisedRequest()
-        
 
-#-------------------- Qualified student list who deserve price ----------------------#
+
+# -------------------- Qualified student list who deserve price ----------------------#
 
 class QualifiedStudentListAPI(APIView):
     def get(self, request):
@@ -541,13 +542,15 @@ class QualifiedStudentListAPI(APIView):
                     return badRequest('Invalid role, Please try again.')
             else:
                 return badRequest('User not found.')
-        else:   
+        else:
             return unauthorisedRequest()
-        
+
 # ------------------------------ Community Services ------------------------------# (USER)
+
 
 services = ["student_education_help", "widow_women_help",
             "health_related_help", "family_widow_daughter_help"]
+
 
 class EducationScolarshipAPI(APIView):
 
