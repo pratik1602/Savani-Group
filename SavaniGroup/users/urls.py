@@ -31,5 +31,8 @@ urlpatterns = [
     #--------------- Apply for Community Services ---------------------#
     path('education-help', EducationScolarshipAPI.as_view() , name='EducationScolarshipAPI'),
     path('vidhva-sahay', WidowWomenHelpAPI.as_view(), name="WidowWomenHelpAPI"),
+    path('health-service', HealthServiceAPI.as_view(), name="HealthServiceAPI"),
+
+    path('service-details' , GetAppliedServicesDetailsAPI.as_view() , name='GetAppliedServicesDetailsAPI'),
 
 ]
