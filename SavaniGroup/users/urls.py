@@ -32,6 +32,7 @@ urlpatterns = [
     path('education-help', EducationScolarshipAPI.as_view() , name='EducationScolarshipAPI'),
     path('vidhva-sahay', WidowWomenHelpAPI.as_view(), name="WidowWomenHelpAPI"),
     path('health-service', HealthServiceAPI.as_view(), name="HealthServiceAPI"),
+    path('widow-daughter-service', WidowDaughterHelpAPI.as_view(), name="WidowDaughterHelpAPI"),
 
     path('service-details' , GetAppliedServicesDetailsAPI.as_view() , name='GetAppliedServicesDetailsAPI'),
 

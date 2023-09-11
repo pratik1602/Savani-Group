@@ -143,21 +143,31 @@ class GetAllCommunityMembersAPI(APIView):
         if token and ObjectId().is_valid(token["_id"]):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
             if get_admin is not None:
-                role = request.GET.get("role")
-                if role != None or 0:
-                    get_all_members = valuesEntity(db.community_members.find({"role": role}, {"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
-                    if get_all_members:
-                        return onSuccess("All users based on filter.", get_all_members)
-                    else:
-                        return badRequest("No Users Found based on filter.")
-                else:
-                    get_all_members = valuesEntity(db.community_members.find({},{"password": 0, "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
-                    if get_all_members:
-                        return onSuccess("Community Members List", get_all_members)
-                    else:
-                        return badRequest("No Members found.")
+                get_all_members = valuesEntity(db.community_members.find({"is_approved":True}, {"_id": 1,"firstname": 1,"middlename": 1,"lastname": 1,"country_code": 1,"mobile_no": 1,"role": 1,"is_approved": 1,"createdAt": 1}).sort("createdAt", -1))
+                return onSuccess('All community members' , get_all_members)
             else:
                 return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
+        
+class GetDetailsOfCommunityMemberAPI(APIView):
+
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            get_admin = db.admin.find_one({'_id':ObjectId(token['_id']) , 'is_active':True , 'is_admin':True})
+            if get_admin is not None and get_admin:
+                _id = request.GET.get('_id')
+                if _id and ObjectId().is_valid(_id):
+                    get_user = valueEntity(db.community_members.find_one({'_id':ObjectId(_id) , 'role':'parent_user'} , {'iso_code':0,'mobile_otp':0,'login_otp':0,'is_active':0,'mobile_verified':0,'createdAt':0,'updatedAt':0,'createdBy':0,'updatedBy':0,}))
+                    if get_user is not None and get_user:
+                        return onSuccess('Details of user' , get_user)
+                    else:
+                        return badRequest('User not found.')
+                else:
+                    return badRequest('Bad request.')
+            else:
+                return badRequest('Admin not found.')
         else:
             return unauthorisedRequest()
 
@@ -221,12 +231,12 @@ class ApproveCommunityMembersAPI(APIView):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
             if get_admin is not None:
                 data = request.data
-                if ObjectId().is_valid(data["_id"]):
+                if data['_id'] and ObjectId().is_valid(data["_id"]):
                     get_community_member = db.community_members.find_one({"_id": ObjectId(data["_id"]), "is_active": True, "registration_fee": True})
                     if get_community_member:
                         obj = {"$set": {
                             "is_approved": data["is_approved"]
-                        }   
+                            }   
                         }
                         db.community_members.find_one_and_update({"_id": ObjectId(get_community_member["_id"])}, obj)
                         return onSuccess("Community member approved successfully.", 1)
@@ -245,10 +255,10 @@ class AddAuthorityMembers(APIView):
 
     def post(self , request):
         token = authenticate(request)
-        if token and ObjectId().is_valid(token['_id']):
-            data = request.data
+        if token and ObjectId().is_valid(token['_id']): 
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
             if get_admin is not None:
+                data = request.data
                 if data['firstname'] and data['firstname'] != '' and len(data['firstname']) >= 3:
                     if data['middlename'] and data['middlename'] != '':
                         if data['villagename'] and data['villagename'] != '':

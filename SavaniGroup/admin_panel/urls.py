@@ -15,6 +15,7 @@ urlpatterns = [
 
     #------------------ Get All Community Members -------------#
     path('list-community-members', GetAllCommunityMembersAPI.as_view(), name="GetAllCommunityMembersAPI"),
+    path('community-member-details' , GetDetailsOfCommunityMemberAPI.as_view() , name='GetDetailsOfCommunityMemberAPI'),
 
     #------------------ Add Community Services ----------------#
     # path('add-community-service', AddCommunitySerivicesAPI.as_view(), name="AddCommunitySerivicesAPI"),
