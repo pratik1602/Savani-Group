@@ -926,4 +926,3 @@ class GetAppliedServicesDetailsAPI(APIView):
                 return badRequest('User not found.')
         else:
             return unauthorisedRequest()
-    
