@@ -16,7 +16,8 @@ def get_user(token):
     if token:
         payload = jwt.decode(token , SECRET_KEY , algorithms=JWT_ALGORITHM)
         if payload:
-            get_admin = db.admin.find_one({"_id": ObjectId(payload["_id"]), "is_active":True, "is_admin" : True}, {"_id": 0,"password": 0,  "is_admin" : 0, "createdAt": 0,"updatedAt": 0,"updatedBy": 0})
+            get_admin = db.admin.find_one({"_id": ObjectId(payload["_id"]), "is_active":True, "is_admin" : True}, {"_id": 0,"password": 0, "createdAt": 0,"updatedAt": 0,"updatedBy": 0}) or db.community_members.find_one({"_id": ObjectId(
+                payload["_id"]), "is_approved": True, "is_active": True, "registration_fees": True, "role": "parent_user"})
         else:
             get_admin = AnonymousUser()
     else:

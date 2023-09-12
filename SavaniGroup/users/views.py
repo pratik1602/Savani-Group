@@ -617,6 +617,7 @@ class EducationScolarshipAPI(APIView):
                                             'mobile_no': parent_user['mobile_no'],
                                             'role': parent_user['role'],
                                             'notification_type': 'Service',
+                                            'service_type': 'Higher Education Assistance Scheme'
                                         }
                                         async_to_sync(channel_layer.group_send)(
                                             'Admin_notification',
@@ -701,6 +702,7 @@ class WidowWomenHelpAPI(APIView):
                                                         'mobile_no': parent_user['mobile_no'],
                                                         'role': parent_user['role'],
                                                         'notification_type': 'Service',
+                                                        'service_type': 'Window Women Assistance Scheme'
                                                     }
                                                     async_to_sync(channel_layer.group_send)(
                                                         'Admin_notification',
@@ -753,6 +755,7 @@ class WidowWomenHelpAPI(APIView):
                                                 'mobile_no': parent_user['mobile_no'],
                                                 'role': parent_user['role'],
                                                 'notification_type': 'Service',
+                                                'service_type': 'Window Women Assistance Scheme'
                                             }
                                             async_to_sync(channel_layer.group_send)(
                                                 'Admin_notification',
@@ -830,6 +833,7 @@ class HealthServiceAPI(APIView):
                                             'mobile_no': parent_user['mobile_no'],
                                             'role': parent_user['role'],
                                             'notification_type': 'Service',
+                                            'service_type': 'Health Assistance Scheme'
                                         }
                                         async_to_sync(channel_layer.group_send)(
                                             'Admin_notification',

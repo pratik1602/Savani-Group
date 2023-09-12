@@ -10,6 +10,9 @@ from core.response import *
 from core.authentication import *
 from .utils import *
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 # Mongo client for making connection with database 
 client = MongoClient(config('MONGO_CONNECTION_STRING'))
 
@@ -150,7 +153,7 @@ class GetAllCommunityMembersAPI(APIView):
         else:
             return unauthorisedRequest()
         
-class GetDetailsOfCommunityMemberAPI(APIView):
+class GetEditDeleteCommunityMemberAPI(APIView):
 
     def get(self , request):
         token = authenticate(request)
@@ -161,11 +164,46 @@ class GetDetailsOfCommunityMemberAPI(APIView):
                 if _id and ObjectId().is_valid(_id):
                     get_user = valueEntity(db.community_members.find_one({'_id':ObjectId(_id) , 'role':'parent_user'} , {'iso_code':0,'mobile_otp':0,'login_otp':0,'is_active':0,'mobile_verified':0,'createdAt':0,'updatedAt':0,'createdBy':0,'updatedBy':0,}))
                     if get_user is not None and get_user:
-                        return onSuccess('Details of user' , get_user)
+                        get_family_members = valuesEntity(db.community_members.find({'createdBy':ObjectId(get_user['_id']) , 'role':'child_user'} , {'createdAt':0,'updatedAt':0,'createdBy':0,'updatedBy':0,'role':0}))
+                        if get_family_members:
+                            data = {
+                                'Parent user': get_user,
+                                'Family members': get_family_members
+                            }
+                            return onSuccess('Details of user' , data)
+                        else:
+                            data = {
+                                'Parent user': get_user,
+                                'Family members': []
+                            }
+                            return onSuccess('Details of user' , data)
                     else:
                         return badRequest('User not found.')
                 else:
                     return badRequest('Bad request.')
+            else:
+                return badRequest('Admin not found.')
+        else:
+            return unauthorisedRequest()
+        
+    def delete(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            get_admin = db.admin.find_one({'_id':ObjectId(token['_id']) , 'is_active':True , 'is_admin':True})
+            if get_admin is not None and get_admin:
+                _id = request.GET.get('_id')
+                if _id and ObjectId().is_valid(_id):
+                    get_user = db.community_members.find_one({'_id':ObjectId(_id) , 'role':'parent_user'})
+                    if get_user and get_user is not None:
+                        db.community_members.delete_one({'_id':ObjectId(get_user['_id']) , 'role':'parent_user'})
+                        db.community_members.delete_many({'createdBy':ObjectId(get_user['_id']) , 'role':'child_user'})
+                        db.community_services.delete_many({'createdBy':ObjectId(get_user['_id'])})
+                        db.student_results.delete_many({'createdBy':ObjectId(get_user['_id'])})
+                        return onSuccess('User delete successfully.' , 1)
+                    else:
+                        return badRequest('User not found.')
+                else:
+                    return badRequest('Id not found.')
             else:
                 return badRequest('Admin not found.')
         else:
@@ -310,4 +348,46 @@ class GetAllPresidentShree(APIView):
             else:
                 return badRequest('User not found.')
         else:   
+            return unauthorisedRequest()
+        
+class SendMessageAPI(APIView):
+
+    def post(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin:
+                data = request.data
+                if data['subject'] and data['message']:
+                    obj = {
+                        'subject': data['subject'],
+                        'message': data['message'],
+                        "createdAt": datetime.datetime.now(),
+                        "createdBy": get_admin['_id'],
+                        "updatedAt": "",
+                        "updatedBy": "",
+                    }
+                    notification = db.SendMessages.insert_one(obj)
+                    # print('notification :',notification)
+                    if notification:
+                        channel_layer = get_channel_layer()
+                        data = {
+                            'subject': data['subject'],
+                            'message': data['message']
+                        }
+                        async_to_sync(channel_layer.group_send)(
+                            'User_notification',
+                            {
+                                'type': 'send.message',
+                                'data': data,
+                            }
+                        )
+                        return onSuccess('Message send successfully.' , 1)
+                    else:
+                        return notCreated('Please try again.')
+                else:
+                    return badRequest('All the fields are necessary to fill.')
+            else:
+                return badRequest('Admin not found.')
+        else:
             return unauthorisedRequest()

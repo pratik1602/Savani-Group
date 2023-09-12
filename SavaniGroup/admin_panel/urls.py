@@ -15,7 +15,7 @@ urlpatterns = [
 
     #------------------ Get All Community Members -------------#
     path('list-community-members', GetAllCommunityMembersAPI.as_view(), name="GetAllCommunityMembersAPI"),
-    path('community-member-details' , GetDetailsOfCommunityMemberAPI.as_view() , name='GetDetailsOfCommunityMemberAPI'),
+    path('get-edit-delete-member' , GetEditDeleteCommunityMemberAPI.as_view() , name='GetEditDeleteCommunityMemberAPI'),
 
     #------------------ Add Community Services ----------------#
     # path('add-community-service', AddCommunitySerivicesAPI.as_view(), name="AddCommunitySerivicesAPI"),
@@ -31,5 +31,7 @@ urlpatterns = [
 
     #------------------ Get All President shri -------------#
     path('president-shre',GetAllPresidentShree.as_view() , name='GetAllPresidentShree'),
+
+    path('send-message' , SendMessageAPI.as_view() , name='SendMessageAPI'),
 
 ]

@@ -44,3 +44,11 @@ def badRequest(message):
         "Status": status.HTTP_400_BAD_REQUEST,
         "IsSuccess": False
     })
+
+def notCreated(message):
+    return Response({
+        "Message": message,
+        "Data": 0,
+        "Status": status.HTTP_400_BAD_REQUEST,
+        "IsSuccess": False
+    })
