@@ -22,7 +22,6 @@ def authenticate(request):
         token = req.split(" ", 1)[1]
         if not token:
             return False
-
         try:
             payload = jwt.decode(token, config('SECRET_KEY'), algorithms=['HS256'])
         except:

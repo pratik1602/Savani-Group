@@ -13,6 +13,9 @@ from core.authentication import *
 from django.core import serializers
 from .utils import send_otp, verify_otp
 
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 # Mongo client for making connection with database
 client = MongoClient(config('MONGO_CONNECTION_STRING'))
 
@@ -71,8 +74,7 @@ class RegisterUserAPI(APIView):
                                                                 if data['iso_code'] and data['iso_code'].isalpha() and (len(data['iso_code']) == 2 or len(data['iso_code']) == 3):
                                                                     if data['mobile_no'].isnumeric() and data['mobile_no'] and data['mobile_no'] != '':
                                                                         if data['email'] != '' and re.match("^[a-zA-Z0-9-_.]+@[a-zA-Z0-9]+\.[a-z]{1,3}$", data["email"]):
-                                                                            existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {
-                                                                                                                         "email": data["email"]}, {"aadhar_number": data["aadhar_number"]}]})
+                                                                            existingUser = db.community_members.find_one({'$or': [{"mobile_no": data["mobile_no"]}, {"email": data["email"]}, {"aadhar_number": data["aadhar_number"]}]})
                                                                             if not existingUser:
                                                                                 obj = {
                                                                                     "profile_pic": "",
@@ -107,13 +109,10 @@ class RegisterUserAPI(APIView):
                                                                                     "createdBy": "",
                                                                                     "updatedBy": "",
                                                                                 }
-                                                                                db.community_members.insert_one(
-                                                                                    obj)
-                                                                                mobile_number = obj["country_code"] + \
-                                                                                    obj["mobile_no"]
+                                                                                db.community_members.insert_one(obj)
+                                                                                mobile_number = obj["country_code"] + obj["mobile_no"]
                                                                                 mobile_otp = obj["mobile_otp"]
-                                                                                send_otp(
-                                                                                    mobile_number, mobile_otp)
+                                                                                send_otp( mobile_number, mobile_otp)
                                                                                 return onSuccess("Regitration Successful...", 1)
                                                                             else:
                                                                                 return badRequest("User already exist with same mobile or email, Please try again.")
@@ -175,9 +174,26 @@ class VerifyMobilenumber(APIView):
                                         "updatedAt": datetime.datetime.now(),
                                     }
                                 }
-                                updateUser = db.community_members.find_one_and_update(
-                                    {"_id": user['_id']}, new_obj, return_document=ReturnDocument.AFTER)
+                                updateUser = db.community_members.find_one_and_update({"_id": user['_id']}, new_obj, return_document=ReturnDocument.AFTER)
                                 if updateUser:
+                                    channel_layer = get_channel_layer()
+                                    data = {
+                                        '_id': str(updateUser['_id']),
+                                        'firstname': updateUser['firstname'],
+                                        'middlename': updateUser['middlename'],
+                                        'lastname': updateUser['lastname'],
+                                        'country_code': updateUser['country_code'],
+                                        'mobile_no': updateUser['mobile_no'],
+                                        'role': updateUser['role'],
+                                        'notification_type': 'Registration',
+                                    }
+                                    async_to_sync(channel_layer.group_send)(
+                                        'Admin_notification',
+                                        {
+                                            'type': 'chat.message',
+                                            'data': data,
+                                        }
+                                    )
                                     return onSuccess("Mobile number verified successfully.", 1)
                                 else:
                                     return badRequest("Invalid data to verify mobile number, Please try again.")
@@ -562,8 +578,7 @@ class EducationScolarshipAPI(APIView):
             if parent_user:
                 data = request.data
                 if data['family_member_id'] and ObjectId().is_valid(data['family_member_id']):
-                    family_member = db.community_members.find_one({"_id": ObjectId(
-                        data['family_member_id']), "createdBy": parent_user['_id'], 'role': 'child_user'})
+                    family_member = db.community_members.find_one({"_id": ObjectId(data['family_member_id']), "createdBy": parent_user['_id'], 'role': 'child_user'})
                     if family_member:
                         if data['service'] in services and data['service'] == 'student_education_help':
                             if data['age'] and data['address'] and data['district'] and data['taluka'] and data['village'] and data['family_member_number'] and data['father_number'] and data['father_occupation'] and data['12_result'] and data['for'] and data['course_name'] and data['college_name'] and data['course_duration']:
@@ -595,6 +610,25 @@ class EducationScolarshipAPI(APIView):
                                     }
                                     service = db.community_services.insert_one(obj)
                                     if service:
+                                        channel_layer = get_channel_layer()
+                                        data = {
+                                            '_id': str(parent_user['_id']),
+                                            'firstname': parent_user['firstname'],
+                                            'middlename': parent_user['middlename'],
+                                            'lastname': parent_user['lastname'],
+                                            'country_code': parent_user['country_code'],
+                                            'mobile_no': parent_user['mobile_no'],
+                                            'role': parent_user['role'],
+                                            'notification_type': 'Service',
+                                            'service_type': 'Higher Education Assistance Scheme'
+                                        }
+                                        async_to_sync(channel_layer.group_send)(
+                                            'Admin_notification',
+                                            {
+                                                'type': 'chat.message',
+                                                'data': data,
+                                            }
+                                        )
                                         return onSuccess('Applied successfully.', 1)
                                     else:
                                         return onError('Server error, try again.')
@@ -661,6 +695,25 @@ class WidowWomenHelpAPI(APIView):
                                                 }
                                                 result = db.community_services.insert_one(obj)
                                                 if result:
+                                                    channel_layer = get_channel_layer()
+                                                    data = {
+                                                        '_id': str(parent_user['_id']),
+                                                        'firstname': parent_user['firstname'],
+                                                        'middlename': parent_user['middlename'],
+                                                        'lastname': parent_user['lastname'],
+                                                        'country_code': parent_user['country_code'],
+                                                        'mobile_no': parent_user['mobile_no'],
+                                                        'role': parent_user['role'],
+                                                        'notification_type': 'Service',
+                                                        'service_type': 'Window Women Assistance Scheme'
+                                                    }
+                                                    async_to_sync(channel_layer.group_send)(
+                                                        'Admin_notification',
+                                                        {
+                                                            'type': 'chat.message',
+                                                            'data': data,
+                                                        }
+                                                    )
                                                     return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
                                                 else:
                                                     return badRequest("Server error.")
@@ -670,6 +723,7 @@ class WidowWomenHelpAPI(APIView):
                                             return badRequest("please enter trust name.")
                                     else:
                                         obj = {
+                                            "service": data["service"],
                                             "parent_user": ObjectId(parent_user['_id']),
                                             "family_member": ObjectId(family_member['_id']),
                                             "current_address": data['current_address'],
@@ -694,6 +748,25 @@ class WidowWomenHelpAPI(APIView):
                                         }
                                         result = db.community_services.insert_one(obj)
                                         if result:
+                                            channel_layer = get_channel_layer()
+                                            data = {
+                                                '_id': str(parent_user['_id']),
+                                                'firstname': parent_user['firstname'],
+                                                'middlename': parent_user['middlename'],
+                                                'lastname': parent_user['lastname'],
+                                                'country_code': parent_user['country_code'],
+                                                'mobile_no': parent_user['mobile_no'],
+                                                'role': parent_user['role'],
+                                                'notification_type': 'Service',
+                                                'service_type': 'Window Women Assistance Scheme'
+                                            }
+                                            async_to_sync(channel_layer.group_send)(
+                                                'Admin_notification',
+                                                {
+                                                    'type': 'chat.message',
+                                                    'data': data,
+                                                }
+                                            )
                                             return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
                                         else:
                                             return badRequest("Server error.")                                                                            
@@ -753,6 +826,25 @@ class HealthServiceAPI(APIView):
                                     }
                                     service = db.community_services.insert_one(obj)
                                     if service:
+                                        channel_layer = get_channel_layer()
+                                        data = {
+                                            '_id': str(parent_user['_id']),
+                                            'firstname': parent_user['firstname'],
+                                            'middlename': parent_user['middlename'],
+                                            'lastname': parent_user['lastname'],
+                                            'country_code': parent_user['country_code'],
+                                            'mobile_no': parent_user['mobile_no'],
+                                            'role': parent_user['role'],
+                                            'notification_type': 'Service',
+                                            'service_type': 'Health Assistance Scheme'
+                                        }
+                                        async_to_sync(channel_layer.group_send)(
+                                            'Admin_notification',
+                                            {
+                                                'type': 'chat.message',
+                                                'data': data,
+                                            }
+                                        )
                                         return onSuccess('Applied successfully.' , 1)
                                     else:
                                         return onError('Server error, try again.')
@@ -766,6 +858,53 @@ class HealthServiceAPI(APIView):
                         return badRequest('Famil member not found.')
                 else:
                     return badRequest('Invalid family member id, Please try again.')   
+            else:
+                return badRequest('User not found.')
+        else:
+            return unauthorisedRequest()
+        
+class WidowDaughterHelpAPI(APIView):
+    def post(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            parent_user = db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_approved": True, "is_active":True, "registration_fees": True, "role": "parent_user"})
+            if parent_user:
+                data = request.data
+                if data['family_member_id'] and ObjectId().is_valid(data['family_member_id']):
+                    family_member = db.community_members.find_one({"_id": ObjectId(data['family_member_id']), "createdBy": parent_user['_id'], 'role': 'child_user'})
+                    if family_member:
+                        if data['service'] in services and data['service'] == 'family_widow_daughter_help':
+                            if data['current_address'] and (data['country_code'] and re.match(r'^\+\d{1,3}$', data['country_code'])) and (data['mobile_no'].isnumeric() and data['mobile_no'] and data['mobile_no'] != '') and data['dod'] and data['no_of_family_member'] and data['no_of_son'] and data['no_of_Daughter']:
+                                alreadyappliedforservice = db.community_services.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id'] , 'service': 'family_widow_daughter_help'})
+                                if not alreadyappliedforservice:
+                                    obj = {
+                                        "service": data["service"],
+                                        "parent_user": ObjectId(parent_user['_id']),
+                                        "family_member": ObjectId(family_member['_id']),
+                                        "current_address": data['current_address'],
+                                        "country_code": data['country_code'],
+                                        "mobile_no": data['mobile_no'],
+                                        "dod": data['dod'],
+                                        "no_of_family_member": data['no_of_family_member'],
+                                        "no_of_son": data['no_of_son'],
+                                        "no_of_Daughter": data['no_of_Daughter'],
+                                        "status": "inprocess",
+                                        "createdAt": datetime.datetime.now(),
+                                        "updatedAt": "",
+                                        "createdBy": ObjectId(parent_user["_id"]),
+                                        "updatedBy": ""
+                                    }
+                                    return onSuccess('Service applied successfully, Please wait for admin approvel.' , 201)
+                                else:
+                                    return badRequest('Already applied for service.')
+                            else:
+                                badRequest('All the fields are necessary to fill.')
+                        else:
+                            return badRequest('Invalid service.')
+                    else:
+                        return badRequest('Family member not found.')
+                else:
+                    return badRequest('Please select family member.')
             else:
                 return badRequest('User not found.')
         else:

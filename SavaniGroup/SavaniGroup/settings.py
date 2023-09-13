@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     "corsheaders",
     'rest_framework',
     'django.contrib.admin',
@@ -40,10 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'admin_panel',
     'users',
+    'Notification',
     'cloudinary_storage',
-    # 'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -76,6 +78,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'SavaniGroup.wsgi.application'
+ASGI_APPLICATION  = 'SavaniGroup.asgi.application'
 
 
 # Database
@@ -153,3 +156,13 @@ EMAIL_HOST_PASSWORD= config('EMAIL_HOST_PASSWORD')
 #send otp url
 SEND_OTP_URL= config('SEND_OTP_URL')
 VERIFY_OTP_URL= config('VERIFY_OTP_URL')
+
+#Redis channel layer configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],
+        },
+    },
+}
