@@ -208,51 +208,55 @@ class GetEditDeleteCommunityMemberAPI(APIView):
                 return badRequest('Admin not found.')
         else:
             return unauthorisedRequest()
+        
+#------------------------------ Add user -----------------------#
 
-
-# #--------------------- Add Community Services --------------------#
-# # from io import BytesIO
-
-
-# class AddCommunitySerivicesAPI(APIView):
-
-#     def post(self, request):
+# class AddUserorAuthorityMembersAPI(APIView):
+#     def post(self , request):
+#         role = ['user' , 'village_head' , 'taluka_head' , 'president']
 #         token = authenticate(request)
 #         if token and ObjectId().is_valid(token["_id"]):
-#             data = request.data
-#             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
+#             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
 #             if get_admin is not None:
-#                 pdf = request.FILES["pdf_form"]
-#                 pdf_url = upload_pdf_to_cloudinary(pdf)
-#                 obj = {
-#                     "scheme_name": data["scheme_name"],
-#                     "pdf_form": pdf_url,
-#                     "createdBy": ObjectId(token["_id"]),
-#                     "createdAt": datetime.datetime.now(),
-#                     "updatedAt": "",
-#                 }
-#                 db.community_services.insert_one(obj)
-#                 return onSuccess("Scheme added successfully.", 1)
-#             else:
-#                 return badRequest("Admin not found.")
-#         else:
-#             return unauthorisedRequest()
-
-
-#--------------------------- Get Community Servives --------------------# (ADMIN, USER)
-
-# class GetCommunityServicesAPI(APIView):
-
-#     def get(self, request):
-#         token = authenticate(request)
-#         if token and ObjectId().is_valid(token["_id"]):
-#             get_user = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True}) or db.community_members.find_one({"_id": ObjectId(token["_id"]), "is_active":True}) 
-#             if get_user is not None:
-#                 get_Community_services = valuesEntity(db.community_services.find())
-#                 if get_Community_services:
-#                     return onSuccess("Community services.", get_Community_services)
+#                 data = request.data
+#                 if data['fullname'] and data['country_code'] and data['iso_code'] and data['mobile_no'] and data['role']:
+#                     if data['role'] in role and data['role'].isalpha():
+#                         if data['role'] == 'user':
+#                             existingUser = db.community_members.find_one({"country_code": data['country_code'],"iso_code": data['iso_code'], "mobile_no": data['mobile_no']})
+#                             if not existingUser:
+#                                 obj = {
+#                                     "firstname": data['firstname'],
+#                                     "middlename": data['middlename'],
+#                                     "lastname": "Savani",
+#                                     "country_code": data['country_code'],
+#                                     "iso_code": data['iso_code'],
+#                                     "mobile_no": data['mobile_no'],
+#                                     "is_approved": True,
+#                                     "is_active": False,
+#                                     "registration_fees": True,
+#                                     "mobile_verified": True,
+#                                     "role": "parent_user",
+#                                     "createdAt": datetime.datetime.now(),
+#                                     "updatedAt": "",
+#                                     "createdBy": get_admin['_id'],
+#                                     "updatedBy": "",
+#                                 }
+#                                 db.community_members.insert_one(obj)
+#                                 return onSuccess('User added successfully.' , 1)
+#                             else:
+#                                 return badRequest('User already exist with same mobile, Please try again.')
+#                         elif data['role'] == 'village_head':
+#                             return
+#                         elif data['role'] == 'taluka_head':
+#                             return
+#                         elif data['role'] == 'president':
+#                             return
+#                         else:
+#                             return badRequest('Invalid role type.')
+#                     else:
+#                         return badRequest('Invalid role type.')                     
 #                 else:
-#                     return badRequest("No Community services found.")
+#                     return badRequest('All fields are necessary to fill.')
 #             else:
 #                 return badRequest("Admin not found.")
 #         else:
