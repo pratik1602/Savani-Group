@@ -10,6 +10,8 @@ from core.response import *
 from core.authentication import *
 from .utils import *
 
+from users.views import generateOTP
+
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
@@ -211,56 +213,142 @@ class GetEditDeleteCommunityMemberAPI(APIView):
         
 #------------------------------ Add user -----------------------#
 
-# class AddUserorAuthorityMembersAPI(APIView):
-#     def post(self , request):
-#         role = ['user' , 'village_head' , 'taluka_head' , 'president']
-#         token = authenticate(request)
-#         if token and ObjectId().is_valid(token["_id"]):
-#             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
-#             if get_admin is not None:
-#                 data = request.data
-#                 if data['fullname'] and data['country_code'] and data['iso_code'] and data['mobile_no'] and data['role']:
-#                     if data['role'] in role and data['role'].isalpha():
-#                         if data['role'] == 'user':
-#                             existingUser = db.community_members.find_one({"country_code": data['country_code'],"iso_code": data['iso_code'], "mobile_no": data['mobile_no']})
-#                             if not existingUser:
-#                                 obj = {
-#                                     "firstname": data['firstname'],
-#                                     "middlename": data['middlename'],
-#                                     "lastname": "Savani",
-#                                     "country_code": data['country_code'],
-#                                     "iso_code": data['iso_code'],
-#                                     "mobile_no": data['mobile_no'],
-#                                     "is_approved": True,
-#                                     "is_active": False,
-#                                     "registration_fees": True,
-#                                     "mobile_verified": True,
-#                                     "role": "parent_user",
-#                                     "createdAt": datetime.datetime.now(),
-#                                     "updatedAt": "",
-#                                     "createdBy": get_admin['_id'],
-#                                     "updatedBy": "",
-#                                 }
-#                                 db.community_members.insert_one(obj)
-#                                 return onSuccess('User added successfully.' , 1)
-#                             else:
-#                                 return badRequest('User already exist with same mobile, Please try again.')
-#                         elif data['role'] == 'village_head':
-#                             return
-#                         elif data['role'] == 'taluka_head':
-#                             return
-#                         elif data['role'] == 'president':
-#                             return
-#                         else:
-#                             return badRequest('Invalid role type.')
-#                     else:
-#                         return badRequest('Invalid role type.')                     
-#                 else:
-#                     return badRequest('All fields are necessary to fill.')
-#             else:
-#                 return badRequest("Admin not found.")
-#         else:
-#             return unauthorisedRequest()
+class AddUserorAuthorityMembersAPI(APIView):
+    def post(self , request):
+        role = ['user' , 'village_head' , 'taluka_head' , 'president']
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                if data['firstname'] and data['middlename'] and data['country_code'] and data['iso_code'] and data['mobile_no'] and data['role']:
+                    if data['role'] in role:
+                        if data['role'] == 'user':
+                            existingUser = db.community_members.find_one({"country_code": data['country_code'],"iso_code": data['iso_code'], "mobile_no": data['mobile_no']})
+                            if not existingUser:
+                                obj = {
+                                    "profile_pic": "",
+                                    "firstname": data['firstname'],
+                                    "middlename": data["middlename"],
+                                    "lastname": "Savani",
+                                    "gender": "",
+                                    "dob": "",
+                                    "country_code": data['country_code'],
+                                    "iso_code": data['iso_code'],
+                                    "mobile_no": data['mobile_no'],
+                                    "address": "",
+                                    "occupation": "",
+                                    "education": "",
+                                    "blood_group": "",
+                                    "district": "",
+                                    "taluka": "",
+                                    "village_name": "",
+                                    "marital_status": "",
+                                    "aadhar_number": "",
+                                    "mobile_otp": generateOTP(),
+                                    "login_otp": "",
+                                    "is_approved": True,
+                                    "is_active": False,
+                                    "registration_fees": True,
+                                    "mobile_verified": True,
+                                    "role": "parent_user",
+                                    "createdAt": datetime.datetime.now(),
+                                    "updatedAt": "",
+                                    "createdBy": get_admin['_id'],
+                                    "updatedBy": "",
+                                }
+                                db.community_members.insert_one(obj)
+                                return onSuccess('User added successfully.' , 1)
+                            else:
+                                return badRequest('User already exist with same mobile, Please try again.')
+                        elif data['role'] == 'village_head':
+                            if data['village_name']:
+                                existingVillagehead = db.community_members.find_one({'village_name': data['village_name'].lower() , 'role': 'village_head'})
+                                if not existingVillagehead: 
+                                    obj = {
+                                        "firstname": data['firstname'],
+                                        "middlename": data['middlename'],
+                                        "lastname": "Savani",
+                                        "country_code": data['country_code'],
+                                        "iso_code": data['iso_code'],
+                                        "mobile_no": data['mobile_no'],
+                                        "village_name": data['village_name'].lower(),
+                                        "role": "village_head",
+                                        "authority_person": True,
+                                        "createdAt": datetime.datetime.now(),
+                                        "updatedAt": "",
+                                        "createdBy": get_admin['_id'],
+                                        "updatedBy": "",
+                                    }
+                                    db.community_members.insert_one(obj)
+                                    return onSuccess('Village head added successfully.' , 1)
+                                else:
+                                    return badRequest('Village head already exits.')
+                            else:
+                                return badRequest('Please enter village name.')
+                        elif data['role'] == 'taluka_head':
+                            if data['taluka_name']:
+                                existingTalukahead = db.community_members.find_one({'taluka': data['taluka_name'].lower() , 'role': 'taluka_head'})
+                                if not existingTalukahead: 
+                                    obj = {
+                                        "firstname": data['firstname'],
+                                        "middlename": data['middlename'],
+                                        "lastname": "Savani",
+                                        "country_code": data['country_code'],
+                                        "iso_code": data['iso_code'],
+                                        "mobile_no": data['mobile_no'],
+                                        "taluka": data['taluka_name'].lower(),
+                                        "role": "taluka_head",
+                                        "authority_person": True,
+                                        "createdAt": datetime.datetime.now(),
+                                        "updatedAt": "",
+                                        "createdBy": get_admin['_id'],
+                                        "updatedBy": "",
+                                    }
+                                    db.community_members.insert_one(obj)
+                                    return onSuccess('Taluka head added successfully.' , 1)
+                                else:
+                                    return badRequest('Taluka head already exits.')
+                            else:
+                                return badRequest('Please enter taluka name.')
+                        elif data['role'] == 'president':
+                            if data['village_name']:
+                                if data['designation']:
+                                    existingPresident = db.community_members.find_one({'role': 'president' , 'designation': data['designation'].lower()})
+                                    if not existingPresident: 
+                                        obj = {
+                                            "firstname": data['firstname'],
+                                            "middlename": data['middlename'],
+                                            "lastname": "Savani",
+                                            "country_code": data['country_code'],
+                                            "iso_code": data['iso_code'],
+                                            "mobile_no": data['mobile_no'],
+                                            "village_name": data['village_name'].lower(),
+                                            "role": "president",
+                                            "designation": data['designation'].lower(),
+                                            "authority_person": True,
+                                            "createdAt": datetime.datetime.now(),
+                                            "updatedAt": "",
+                                            "createdBy": get_admin['_id'],
+                                            "updatedBy": "",
+                                        }
+                                        db.community_members.insert_one(obj)
+                                        return onSuccess('President added successfully.' , 1)
+                                    else:
+                                        return badRequest('President already exits.')
+                                return badRequest('Invalid designation.')
+                            else:
+                                return badRequest('Invalid village name.')
+                        else:
+                            return badRequest('Invalid role type.')
+                    else:
+                        return badRequest('Invalid role type.')                     
+                else:
+                    return badRequest('All fields are necessary to fill.')
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
 
 
 #------------------------------ Approve Community Members -----------------------#
@@ -291,53 +379,9 @@ class ApproveCommunityMembersAPI(APIView):
         else:
             return unauthorisedRequest()
 
-#------------------------------ Add/Delete authority members -----------------------#
+#------------------------------ Get authority members -----------------------#
 
-class AddAuthorityMembers(APIView):
-
-    def post(self , request):
-        token = authenticate(request)
-        if token and ObjectId().is_valid(token['_id']): 
-            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
-            if get_admin is not None:
-                data = request.data
-                if data['firstname'] and data['firstname'] != '' and len(data['firstname']) >= 3:
-                    if data['middlename'] and data['middlename'] != '':
-                        if data['villagename'] and data['villagename'] != '':
-                            if data['role'] and data['role'] != '':
-                                if data['designation']:
-                                    obj = {
-                                        "firstname": data['firstname'],
-                                        "middlename": data['middlename'],
-                                        "lastname": 'Savani',
-                                        "village": data['villagename'],
-                                        "role": data['role'],
-                                        "designation": data['designation'],
-                                        "authority_person": True,
-                                        "is_active": False,
-                                        "createdAt": datetime.datetime.now(),
-                                        "createdBy": get_admin['_id'],
-                                        "updatedAt": "",
-                                        "updatedBy": "",
-                                    }
-                                    db.community_members.insert_one(obj)
-                                    return onSuccess("Add successfully",1)
-                                else:
-                                    return badRequest('Invalid designation, Please try again.')
-                            else:
-                                return badRequest('Invalid role, Please try again.')
-                        else:
-                            return badRequest('Invalid village name, Please try again.')
-                    else:
-                        return badRequest('Invalid middle name, Please try again.')
-                else:
-                    return badRequest('Invalid firstname, Please try again.')                        
-            else:
-                return badRequest('Admin not found.')
-        else:
-            return unauthorisedRequest()
-
-class GetAllPresidentShree(APIView):
+class GetAllAuthorityMembersAPI(APIView):
     def get(self , request):
         token = authenticate(request)
         if token and ObjectId().is_valid(token['_id']):
@@ -345,7 +389,7 @@ class GetAllPresidentShree(APIView):
             if get_user is not None:
                 role = request.GET.get('role')
                 if role and role != '':
-                    get_all_president = valuesEntity(db.community_members.find({"role": role}, {"authority_person": 0, "createdAt": 0 , "createdBy": 0 , "is_active": 0 , "_id": 0 , "updatedAt": 0, "updatedBy": 0}).sort("createdAt", -1))
+                    get_all_president = valuesEntity(db.community_members.find({"role": role , "authority_person":True}, {"authority_person": 0, "createdAt": 0 , "createdBy": 0 , "is_active": 0 , "_id": 0 , "updatedAt": 0, "updatedBy": 0 , "date": 0, "amount": 0, "online": 0,"transactionID": 0,"role": 0}).sort("createdAt", -1))
                     return onSuccess("List of all authority members",get_all_president)
                 else:
                     return badRequest('Invalid role, Please try again.')
@@ -353,6 +397,7 @@ class GetAllPresidentShree(APIView):
                 return badRequest('User not found.')
         else:   
             return unauthorisedRequest()
+        
         
 class SendMessageAPI(APIView):
 
@@ -393,5 +438,183 @@ class SendMessageAPI(APIView):
                     return badRequest('All the fields are necessary to fill.')
             else:
                 return badRequest('Admin not found.')
+        else:
+            return unauthorisedRequest()
+
+class AddDonatorAPI(APIView):
+    def post(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                if data['donator_name'] and data['village_name'] and data['date'] and data['amount']:
+                    if data['online'] == True:
+                        if data['transactionID'] and data['transactionID'] != '' and (' 'not in data['transactionID']):
+                            obj = {
+                                "donator_name": data['donator_name'],
+                                "village_name": data['village_name'],
+                                "date": data['date'],
+                                "amount": data['amount'],
+                                "online": data['online'],
+                                "transactionID": data['transactionID'],
+                                "role": "donator",
+                                "authority_person": True,
+                                "createdAt": datetime.datetime.now(),
+                                "updatedAt": "",
+                                "createdBy": get_admin['_id'],
+                                "updatedBy": "",
+                            }
+                            db.community_members.insert_one(obj)
+                            return onSuccess('Donator added successfully.',1)
+                        else:
+                            return badRequest('Invalid transactionID.')
+                    else:
+                        obj = {
+                            "donator_name": data['donator_name'],
+                            "village_name": data['village_name'],
+                            "date": data['date'],
+                            "amount": data['amount'],
+                            "online": False,
+                            "transactionID": "",
+                            "role": "donator",
+                            "authority_person": True,
+                            "createdAt": datetime.datetime.now(),
+                            "updatedAt": "",
+                            "createdBy": get_admin['_id'],
+                            "updatedBy": "",
+                        }
+                        db.community_members.insert_one(obj)
+                        return onSuccess('Donator added successfully.',1)
+                else:
+                    return badRequest("All the fields are necessary to fill.")
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
+
+
+class AddEarningAPI(APIView):
+    def post(self, request):
+        earning_type = ['donation' , 'registration_fee' , 'interest']
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                if data['earning_type'] and data['earning_type'] in earning_type:
+                    if data['date']:
+                        if data['amount'] and data['amount']>0:
+                            if data['online'] == True:
+                                if data['transactionID'] and data['transactionID'] != '' and (' ' not in data['transactionID']):
+                                    obj = {
+                                        "earning_type": data['earning_type'],
+                                        "date": data['date'],
+                                        "amount": data['amount'],
+                                        "online": data['online'],
+                                        "transactionID": data['transactionID'],
+                                        "type": "earning",
+                                        "createdAt": datetime.datetime.now(),
+                                        "updatedAt": "",
+                                        "createdBy": get_admin['_id'],
+                                        "updatedBy": "", 
+                                    }
+                                    db.earnings_expenses.insert_one(obj)
+                                    return onSuccess('Earning added successfully.',1)
+                                else:
+                                    return badRequest('Invalid transactionID.')
+                            else:
+                                obj = {
+                                    "earning_type": data['earning_type'],
+                                    "date": data['date'],
+                                    "amount": data['amount'],
+                                    "online": False,
+                                    "transactionID": "",
+                                    "type": "earning",
+                                    "createdAt": datetime.datetime.now(),
+                                    "updatedAt": "",
+                                    "createdBy": get_admin['_id'],
+                                    "updatedBy": "", 
+                                }
+                                db.earnings_expenses.insert_one(obj)
+                                return onSuccess('Earning added successfully.',1)
+                        else:
+                            return badRequest('Invalid amount.')
+                    else:
+                        badRequest('Invalid date.')
+                else:
+                    return badRequest('Invalid earning type.')
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()
+        
+class AddExpensesAPI(APIView):
+    def post(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                if data['expenses_name']:
+                    if data['date']:
+                        if data['amount'] and data['amount']>0:
+                            if data['online'] == True:
+                                if data['transactionID'] and data['transactionID'] != '' and (' ' not in data['transactionID']):
+                                    obj = {
+                                        "expenses_name": data['expenses_name'],
+                                        "date": data['date'],
+                                        "amount": data['amount'],
+                                        "online": data['online'],
+                                        "transactionID": data['transactionID'],
+                                        "type": "expenses",
+                                        "createdAt": datetime.datetime.now(),
+                                        "updatedAt": "",
+                                        "createdBy": get_admin['_id'],
+                                        "updatedBy": "", 
+                                    }
+                                    db.earnings_expenses.insert_one(obj)
+                                    return onSuccess('Expenses added successfully.',1)
+                                else:
+                                    return badRequest('Invalid transactionID.')
+                            else:
+                                obj = {
+                                    "expenses_name": data['expenses_name'],
+                                    "date": data['date'],
+                                    "amount": data['amount'],
+                                    "online": False,
+                                    "transactionID": "",
+                                    "type": "expenses",
+                                    "createdAt": datetime.datetime.now(),
+                                    "updatedAt": "",
+                                    "createdBy": get_admin['_id'],
+                                    "updatedBy": "", 
+                                }
+                                db.earnings_expenses.insert_one(obj)
+                                return onSuccess('Expenses added successfully.',1)
+                        else:
+                            return badRequest('Invalid amount.')
+                    else:
+                        badRequest('Invalid date.')
+                else:
+                    return badRequest('Invalid expenses.')
+            else:
+                return badRequest("Admin not found.")
+        else:
+            return unauthorisedRequest()    
+        
+
+class AddInterestAPI(APIView):
+    
+    def post(self, request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token["_id"]):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                data = request.data
+                print('data :',data)
+                return onSuccess('Interest added successfully.',1)
+            else:
+                return badRequest("Admin not found.")
         else:
             return unauthorisedRequest()

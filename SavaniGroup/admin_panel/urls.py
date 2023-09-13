@@ -17,17 +17,22 @@ urlpatterns = [
     path('list-community-members', GetAllCommunityMembersAPI.as_view(), name="GetAllCommunityMembersAPI"),
     path('get-edit-delete-member' , GetEditDeleteCommunityMemberAPI.as_view() , name='GetEditDeleteCommunityMemberAPI'),
 
-    #------------------ Add user ----------------#
-    # path('add-user' , AddUserorAuthorityMembersAPI.as_view() , name='AddUserorAuthorityMembersAPI'),
-
     #------------------- Approve Community Members ------------#
     path('approve-member', ApproveCommunityMembersAPI.as_view(), name="ApproveCommunityMembersAPI"),
 
     #------------------- Add Authority Members ------------#
-    path('add-auth-member', AddAuthorityMembers.as_view(), name="AddAuthorityMembers"),
+    path('add-user-auth-member', AddUserorAuthorityMembersAPI.as_view(), name="AddUserorAuthorityMembersAPI"),
 
     #------------------ Get All President shri -------------#
-    path('president-shre',GetAllPresidentShree.as_view() , name='GetAllPresidentShree'),
+    path('authority-members',GetAllAuthorityMembersAPI.as_view() , name='GetAllAuthorityMembersAPI'),
+
+    #------------------- Add Donators ------------#
+    path('add-donators' , AddDonatorAPI.as_view() , name='AddDonatorAPI'),
+
+    #------------------- Add earning , expenses and interest ------------#
+    path('add-earning' , AddEarningAPI.as_view() , name='AddEarningAPI'),
+    path('add-expenses' , AddExpensesAPI.as_view() , name='AddExpensesAPI'),
+    path('add-interest' , AddInterestAPI.as_view() , name='AddInterestAPI'),
 
     path('send-message' , SendMessageAPI.as_view() , name='SendMessageAPI'),
 
