@@ -115,7 +115,7 @@ class RegisterUserAPI(APIView):
                                                                                 send_otp( mobile_number, mobile_otp)
                                                                                 return onSuccess("Regitration Successful...", 1)
                                                                             else:
-                                                                                return badRequest("User already exist with same mobile or email, Please try again.")
+                                                                                return badRequest("User already exist with same mobile, Please try again.")
                                                                         else:
                                                                             return badRequest("Invalid email id, Please try again.")
                                                                     else:
@@ -159,8 +159,7 @@ class VerifyMobilenumber(APIView):
         if data['country_code'] and re.match(r'^\+\d{1,3}$', data['country_code']):
             if data['mobile_no'].isnumeric() and data['mobile_no'] and data['mobile_no'] != '':
                 if data['otp'] and data['otp'] != '' and len(data['otp']) == 6 and data['otp'].isnumeric():
-                    user = db.community_members.find_one(
-                        {"country_code": data['country_code'], "mobile_no": data['mobile_no']})
+                    user = db.community_members.find_one({"country_code": data['country_code'], "mobile_no": data['mobile_no']})
                     if user is not None:
                         if not user['mobile_verified']:
                             mobile_number = user['country_code'] + \

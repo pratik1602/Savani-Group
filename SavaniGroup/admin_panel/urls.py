@@ -17,11 +17,8 @@ urlpatterns = [
     path('list-community-members', GetAllCommunityMembersAPI.as_view(), name="GetAllCommunityMembersAPI"),
     path('get-edit-delete-member' , GetEditDeleteCommunityMemberAPI.as_view() , name='GetEditDeleteCommunityMemberAPI'),
 
-    #------------------ Add Community Services ----------------#
-    # path('add-community-service', AddCommunitySerivicesAPI.as_view(), name="AddCommunitySerivicesAPI"),
-
-    #------------------ Get Community Servives ----------------# (ADMIN, USER)
-    # path('get-community-service', GetCommunityServicesAPI.as_view(), name="GetCommunityServicesAPI"),
+    #------------------ Add user ----------------#
+    # path('add-user' , AddUserorAuthorityMembersAPI.as_view() , name='AddUserorAuthorityMembersAPI'),
 
     #------------------- Approve Community Members ------------#
     path('approve-member', ApproveCommunityMembersAPI.as_view(), name="ApproveCommunityMembersAPI"),
