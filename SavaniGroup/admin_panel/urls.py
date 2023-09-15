@@ -30,7 +30,7 @@ urlpatterns = [
     path('add-donators' , AddDonatorAPI.as_view() , name='AddDonatorAPI'),
 
     #------------------- Add earning , expenses and interest ------------#
-    path('add-earning' , AddEarningAPI.as_view() , name='AddEarningAPI'),
+    path('add-get-earning' , AddAndGetEarningAPI.as_view() , name='AddAndGetEarningAPI'),
     path('add-expenses' , AddExpensesAPI.as_view() , name='AddExpensesAPI'),
     path('add-interest' , AddInterestAPI.as_view() , name='AddInterestAPI'),
 

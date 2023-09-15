@@ -10,6 +10,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from bson.objectid import ObjectId
 from core.response import *
 from core.authentication import *
+from core.utils import validate_date_formate , is_date_less_than_today
 from django.core import serializers
 from .utils import send_otp, verify_otp
 
@@ -60,7 +61,7 @@ class RegisterUserAPI(APIView):
         if data['firstname'] != '' and len(data['firstname']) >= 3:
             if data["middlename"] != '' and len(data["middlename"]) >= 3:
                 if data["gender"] and (data["gender"] == 'male' or data["gender"] == 'female'):
-                    if data["dob"]:
+                    if data["dob"] and is_date_less_than_today(data["dob"]):
                         if data["address"]:
                             if data["occupation"] and (data["occupation"] == 'business' or data['occupation'] == 'job' or data['occupation'] == 'other'):
                                 if data["education"]:
@@ -656,118 +657,121 @@ class WidowWomenHelpAPI(APIView):
                         family_member = db.community_members.find_one({"_id": ObjectId(data['family_member']), "createdBy": parent_user['_id'], 'role': 'child_user'})
                         if family_member:
                             if data["current_address"] and (data['country_code'] and re.match(r'^\+\d{1,3}$', data['country_code'])) and (data['mobile_no'].isnumeric() and data['mobile_no'] and data['mobile_no'] != '') and data['death_date'] and data['no_of_members'] and data['child_details_son'] and data["child_details_daughter"] and data["district"] and data["taluka"] and data["village"] and data["land_details"] and data["no_of_house"]:
-                                alreadyappliedforservice = db.community_services.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id'] , 'service': 'widow_women_help'})
-                                if not alreadyappliedforservice:
-                                    if data["running_service"] == True:
-                                        if data["trust_name"]:
-                                            if data["decided_amount_in_cash"] and data["decided_amount_in_school_fee"] and data["decided_total_amount"]:
-                                                obj = {
-                                                    "service": data["service"],
-                                                    "parent_user": ObjectId(parent_user['_id']),
-                                                    "family_member": ObjectId(family_member['_id']),
-                                                    "current_address": data['current_address'],
-                                                    "country_code": data["country_code"],
-                                                    "mobile_no": data['mobile_no'],
-                                                    "death_date": data['death_date'],
-                                                    "no_of_members": int(data['no_of_members']),
-                                                    "child_details_son": int(data["child_details_son"]),
-                                                    "child_details_daughter": int(data["child_details_daughter"]),
-                                                    "district": data['district'],
-                                                    "taluka": data['taluka'],
-                                                    "village": data['village'],
-                                                    "land_details": data['land_details'],
-                                                    "no_of_house": int(data['no_of_house']),
-                                                    "other_property": data['other_property'],
-                                                    "running_service": data["running_service"],
-                                                    "trust_name": data["trust_name"],
-                                                    "decided_amount_in_cash": int(data["decided_amount_in_cash"]),
-                                                    "decided_amount_in_school_fee": int(data["decided_amount_in_school_fee"]),
-                                                    "decided_total_amount": int(data["decided_total_amount"]),
-                                                    "status": "inprocess",
-                                                    "createdAt": datetime.datetime.now(),
-                                                    "updatedAt": "",
-                                                    "createdBy": ObjectId(parent_user["_id"]),
-                                                    "updatedBy": ""
-                                                }
-                                                result = db.community_services.insert_one(obj)
-                                                if result:
-                                                    channel_layer = get_channel_layer()
-                                                    data = {
-                                                        '_id': str(parent_user['_id']),
-                                                        'firstname': parent_user['firstname'],
-                                                        'middlename': parent_user['middlename'],
-                                                        'lastname': parent_user['lastname'],
-                                                        'country_code': parent_user['country_code'],
-                                                        'mobile_no': parent_user['mobile_no'],
-                                                        'role': parent_user['role'],
-                                                        'notification_type': 'Service',
-                                                        'service_type': 'Window Women Assistance Scheme'
+                                if is_date_less_than_today(data['death_date']):
+                                    alreadyappliedforservice = db.community_services.find_one({'parent_user': parent_user['_id'] , 'family_member': family_member['_id'] , 'service': 'widow_women_help'})
+                                    if not alreadyappliedforservice:
+                                        if data["running_service"] == True:
+                                            if data["trust_name"]:
+                                                if data["decided_amount_in_cash"] and data["decided_amount_in_school_fee"] and data["decided_total_amount"]:
+                                                    obj = {
+                                                        "service": data["service"],
+                                                        "parent_user": ObjectId(parent_user['_id']),
+                                                        "family_member": ObjectId(family_member['_id']),
+                                                        "current_address": data['current_address'],
+                                                        "country_code": data["country_code"],
+                                                        "mobile_no": data['mobile_no'],
+                                                        "death_date": data['death_date'],
+                                                        "no_of_members": int(data['no_of_members']),
+                                                        "child_details_son": int(data["child_details_son"]),
+                                                        "child_details_daughter": int(data["child_details_daughter"]),
+                                                        "district": data['district'],
+                                                        "taluka": data['taluka'],
+                                                        "village": data['village'],
+                                                        "land_details": data['land_details'],
+                                                        "no_of_house": int(data['no_of_house']),
+                                                        "other_property": data['other_property'],
+                                                        "running_service": data["running_service"],
+                                                        "trust_name": data["trust_name"],
+                                                        "decided_amount_in_cash": int(data["decided_amount_in_cash"]),
+                                                        "decided_amount_in_school_fee": int(data["decided_amount_in_school_fee"]),
+                                                        "decided_total_amount": int(data["decided_total_amount"]),
+                                                        "status": "inprocess",
+                                                        "createdAt": datetime.datetime.now(),
+                                                        "updatedAt": "",
+                                                        "createdBy": ObjectId(parent_user["_id"]),
+                                                        "updatedBy": ""
                                                     }
-                                                    async_to_sync(channel_layer.group_send)(
-                                                        'Admin_notification',
-                                                        {
-                                                            'type': 'chat.message',
-                                                            'data': data,
+                                                    result = db.community_services.insert_one(obj)
+                                                    if result:
+                                                        channel_layer = get_channel_layer()
+                                                        data = {
+                                                            '_id': str(parent_user['_id']),
+                                                            'firstname': parent_user['firstname'],
+                                                            'middlename': parent_user['middlename'],
+                                                            'lastname': parent_user['lastname'],
+                                                            'country_code': parent_user['country_code'],
+                                                            'mobile_no': parent_user['mobile_no'],
+                                                            'role': parent_user['role'],
+                                                            'notification_type': 'Service',
+                                                            'service_type': 'Window Women Assistance Scheme'
                                                         }
-                                                    )
-                                                    return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
+                                                        async_to_sync(channel_layer.group_send)(
+                                                            'Admin_notification',
+                                                            {
+                                                                'type': 'chat.message',
+                                                                'data': data,
+                                                            }
+                                                        )
+                                                        return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
+                                                    else:
+                                                        return badRequest("Server error.")
                                                 else:
-                                                    return badRequest("Server error.")
+                                                    return badRequest("Please enter decided amount details.")
                                             else:
-                                                return badRequest("Please enter decided amount details.")
+                                                return badRequest("please enter trust name.")
                                         else:
-                                            return badRequest("please enter trust name.")
-                                    else:
-                                        obj = {
-                                            "service": data["service"],
-                                            "parent_user": ObjectId(parent_user['_id']),
-                                            "family_member": ObjectId(family_member['_id']),
-                                            "current_address": data['current_address'],
-                                            "country_code": data["country_code"],
-                                            "mobile_no": data['mobile_no'],
-                                            "death_date": data['death_date'],
-                                            "no_of_members": int(data['no_of_members']),
-                                            "child_details_son": int(data["child_details_son"]),
-                                            "child_details_daughter": int(data["child_details_daughter"]),
-                                            "district": data['district'],
-                                            "taluka": data['taluka'],
-                                            "village": data['village'],
-                                            "land_details": data['land_details'],
-                                            "no_of_house": int(data['no_of_house']),
-                                            "other_property": data['other_property'],
-                                            "running_service": data["running_service"],
-                                            "status": "inprocess",
-                                            "createdAt": datetime.datetime.now(),
-                                            "updatedAt": "",
-                                            "createdBy": ObjectId(parent_user["_id"]),
-                                            "updatedBy": ""
-                                        }
-                                        result = db.community_services.insert_one(obj)
-                                        if result:
-                                            channel_layer = get_channel_layer()
-                                            data = {
-                                                '_id': str(parent_user['_id']),
-                                                'firstname': parent_user['firstname'],
-                                                'middlename': parent_user['middlename'],
-                                                'lastname': parent_user['lastname'],
-                                                'country_code': parent_user['country_code'],
-                                                'mobile_no': parent_user['mobile_no'],
-                                                'role': parent_user['role'],
-                                                'notification_type': 'Service',
-                                                'service_type': 'Window Women Assistance Scheme'
+                                            obj = {
+                                                "service": data["service"],
+                                                "parent_user": ObjectId(parent_user['_id']),
+                                                "family_member": ObjectId(family_member['_id']),
+                                                "current_address": data['current_address'],
+                                                "country_code": data["country_code"],
+                                                "mobile_no": data['mobile_no'],
+                                                "death_date": data['death_date'],
+                                                "no_of_members": int(data['no_of_members']),
+                                                "child_details_son": int(data["child_details_son"]),
+                                                "child_details_daughter": int(data["child_details_daughter"]),
+                                                "district": data['district'],
+                                                "taluka": data['taluka'],
+                                                "village": data['village'],
+                                                "land_details": data['land_details'],
+                                                "no_of_house": int(data['no_of_house']),
+                                                "other_property": data['other_property'],
+                                                "running_service": data["running_service"],
+                                                "status": "inprocess",
+                                                "createdAt": datetime.datetime.now(),
+                                                "updatedAt": "",
+                                                "createdBy": ObjectId(parent_user["_id"]),
+                                                "updatedBy": ""
                                             }
-                                            async_to_sync(channel_layer.group_send)(
-                                                'Admin_notification',
-                                                {
-                                                    'type': 'chat.message',
-                                                    'data': data,
+                                            result = db.community_services.insert_one(obj)
+                                            if result:
+                                                channel_layer = get_channel_layer()
+                                                data = {
+                                                    '_id': str(parent_user['_id']),
+                                                    'firstname': parent_user['firstname'],
+                                                    'middlename': parent_user['middlename'],
+                                                    'lastname': parent_user['lastname'],
+                                                    'country_code': parent_user['country_code'],
+                                                    'mobile_no': parent_user['mobile_no'],
+                                                    'role': parent_user['role'],
+                                                    'notification_type': 'Service',
+                                                    'service_type': 'Window Women Assistance Scheme'
                                                 }
-                                            )
-                                            return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
-                                        else:
-                                            return badRequest("Server error.")                                                                            
+                                                async_to_sync(channel_layer.group_send)(
+                                                    'Admin_notification',
+                                                    {
+                                                        'type': 'chat.message',
+                                                        'data': data,
+                                                    }
+                                                )
+                                                return onSuccess("Service applied successfully, Please wait for admin approvel.", 1)
+                                            else:
+                                                return badRequest("Server error.")                                                                            
+                                    else:
+                                        return badRequest('Already applied for service.') 
                                 else:
-                                    return badRequest('Already applied for service.') 
+                                    return badRequest('Invalid death date.')
                             else:
                                 return badRequest("All the fields are necessary to fill.")                                                                       
                         else:

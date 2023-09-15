@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from bson.objectid import ObjectId
 from core.response import *
 from core.authentication import *
-from .utils import *
+from core.utils import is_date_grater_than , is_date_less_than , is_date_less_than_or_equal_today , is_date_grater_than_or_equal_today , validate_date_formate , get_start_and_end_date
 
 from users.views import generateOTP
 
@@ -148,8 +148,12 @@ class GetAllCommunityMembersAPI(APIView):
         if token and ObjectId().is_valid(token["_id"]):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]), "is_active":True, "is_admin" : True})
             if get_admin is not None:
-                get_all_members = valuesEntity(db.community_members.find({"is_approved":True}, {"_id": 1,"firstname": 1,"middlename": 1,"lastname": 1,"country_code": 1,"mobile_no": 1,"role": 1,"is_approved": 1,"createdAt": 1}).sort("createdAt", -1))
-                return onSuccess('All community members' , get_all_members)
+                get_all_members = valuesEntity(db.community_members.find({"$or" : [{"role": "parent_user"} ,{"role": "village_head"} ,{"role": "taluka_head"} ,{"role": "president"}]}, {"_id": 1,"firstname": 1,"middlename": 1,"lastname": 1,"country_code": 1,"mobile_no": 1,"role": 1,"is_approved": 1,"createdAt": 1}).sort("createdAt", -1))
+                data = {
+                    'total_user': len(get_all_members),
+                    'user_details': get_all_members
+                }
+                return onSuccess('All community members' , data)
             else:
                 return badRequest("Admin not found.")
         else:
@@ -274,6 +278,7 @@ class AddUserorAuthorityMembersAPI(APIView):
                                         "mobile_no": data['mobile_no'],
                                         "village_name": data['village_name'].lower(),
                                         "role": "village_head",
+                                        "is_approved" : True,
                                         "authority_person": True,
                                         "createdAt": datetime.datetime.now(),
                                         "updatedAt": "",
@@ -299,6 +304,7 @@ class AddUserorAuthorityMembersAPI(APIView):
                                         "mobile_no": data['mobile_no'],
                                         "taluka": data['taluka_name'].lower(),
                                         "role": "taluka_head",
+                                        "is_approved" : True,
                                         "authority_person": True,
                                         "createdAt": datetime.datetime.now(),
                                         "updatedAt": "",
@@ -326,6 +332,7 @@ class AddUserorAuthorityMembersAPI(APIView):
                                             "village_name": data['village_name'].lower(),
                                             "role": "president",
                                             "designation": data['designation'].lower(),
+                                            "is_approved" : True,
                                             "authority_person": True,
                                             "createdAt": datetime.datetime.now(),
                                             "updatedAt": "",
@@ -494,7 +501,50 @@ class AddDonatorAPI(APIView):
             return unauthorisedRequest()
 
 
-class AddEarningAPI(APIView):
+class AddAndGetEarningAPI(APIView):
+
+    def get(self , request):
+        token = authenticate(request)
+        if token and ObjectId().is_valid(token['_id']):
+            get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
+            if get_admin is not None:
+                month = request.GET.get('month')
+                year = request.GET.get('year')
+                if month and year:
+                    start_date , end_date = get_start_and_end_date(month=int(month) , year=int(year))
+                    total_amount = 0
+                    month_earning = valuesEntity(db.earnings_expenses.find({"type": "earning" , "createdAt":{"$gte": start_date,"$lt": end_date}} , {"createdAt": 0 , "createdBy": 0 , "updatedAt": 0, "updatedBy": 0 , "type":0}).sort("createdAt", -1))
+                    earing_details = valuesEntity(db.earnings_expenses.find({"type": "earning"} , {"createdAt": 0 , "createdBy": 0 , "updatedAt": 0, "updatedBy": 0 , "type":0}).sort("createdAt", -1))
+                    for earning in month_earning:
+                        total_amount += earning['amount']
+                    data = {
+                        'total_amount':total_amount,
+                        'earing_details': earing_details
+                    }
+                    return onSuccess('total earning',data)
+                else:
+                    current_year = datetime.datetime.today().year
+                    start_date = datetime.datetime(current_year , 1 , 1)
+                    end_date = datetime.datetime(current_year , 12 , 31)
+                    current_year_earning_amount = 0
+                    current_year_expenses_amount = 0
+                    current_year_earning_details = valuesEntity(db.earnings_expenses.find({"type": "earning" , "createdAt":{"$gte": start_date,"$lt": end_date}} , {"createdAt": 0 , "createdBy": 0 , "updatedAt": 0, "updatedBy": 0 , "type":0}).sort("createdAt", -1))
+                    current_year_expenses_details = valuesEntity(db.earnings_expenses.find({"type": "expenses" , "createdAt":{"$gte": start_date,"$lt": end_date}} , {"createdAt": 0 , "createdBy": 0 , "updatedAt": 0, "updatedBy": 0 , "type":0}).sort("createdAt", -1))
+                    for earning in current_year_earning_details:
+                        current_year_earning_amount += earning['amount']
+                    for expenses in current_year_expenses_details:
+                        current_year_expenses_amount += expenses['amount']
+                    data = {
+                        'total_earning_amount':current_year_earning_amount,
+                        'total_expenses_amount':current_year_expenses_amount,
+                        'earing_details': current_year_earning_details
+                    }
+                    return onSuccess('Total earning',data)
+            else:
+                return badRequest('User not found.')
+        else:   
+            return unauthorisedRequest()
+
     def post(self, request):
         earning_type = ['donation' , 'registration_fee' , 'interest']
         token = authenticate(request)
@@ -612,8 +662,42 @@ class AddInterestAPI(APIView):
             get_admin = db.admin.find_one({"_id": ObjectId(token["_id"]),"is_active":True, "is_admin" : True})
             if get_admin is not None:
                 data = request.data
-                print('data :',data)
-                return onSuccess('Interest added successfully.',1)
+                if data['fullname'] and data['total_amount'] and data['start_date'] and data['end_date'] and data['interest_percentage'] and data['interest_amount']:
+                    if data['fullname'] != '' and all(chr.isalpha() or chr.isspace() for chr in data['fullname']):
+                        if isinstance(data['total_amount'] , (int, float)):
+                            if is_date_less_than_or_equal_today(data['start_date']):
+                                if validate_date_formate(data['end_date']) and is_date_grater_than(data['start_date'] , data['end_date']):
+                                    if isinstance(data['interest_percentage'] , float):
+                                        if isinstance(data['interest_amount'] , (int, float)):
+                                            obj = {
+                                                "fullname": data['fullname'],
+                                                "total_amount": data['total_amount'],
+                                                "start_date": data['start_date'],
+                                                "end_date": data['end_date'],
+                                                "interest_percentage": data['interest_percentage'],
+                                                "interest_amount": data['interest_amount'],
+                                                "type": "interest",
+                                                "createdAt": datetime.datetime.now(),
+                                                "updatedAt": "",
+                                                "createdBy": get_admin['_id'],
+                                                "updatedBy": "", 
+                                            }
+                                            db.earnings_expenses.insert_one(obj)
+                                            return onSuccess('Interest added successfully.',1)
+                                        else:
+                                            return badRequest('Invalid interest amount.')
+                                    else:
+                                        return badRequest('Invalid interest percentage.')
+                                else:
+                                    return badRequest('Invalid end date.')
+                            else:
+                                return badRequest('Invalid start date.')
+                        else:
+                            return badRequest('Invalid amount.')
+                    else:
+                        return badRequest('Invalid name.')
+                else:
+                    return badRequest('All the fields are necessary to fill.')                
             else:
                 return badRequest("Admin not found.")
         else:
